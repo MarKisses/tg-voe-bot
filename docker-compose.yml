@@ -1,0 +1,29 @@
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: docker/bot/Dockerfile
+    container_name: tg_disconnection_bot
+    volumes:
+      - ./app:/sasalka/app
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    env_file:
+      - ./app/.env
+    depends_on:
+      - redis
+
+  redis:
+    image: "redis:alpine"
+    container_name: tg_disconnection_bot_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    env_file:
+      - ./app/.env
+
+volumes:
+  redis_data:

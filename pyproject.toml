@@ -1,0 +1,28 @@
+[project]
+name = "voe-bot"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "MarKisses",email = "igor3003moroz@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "aiogram (==3.10.0)",
+    "beautifulsoup4 (>=4.14.2,<5.0.0)",
+    "lxml (>=6.0.2,<7.0.0)",
+    "httpx[http2] (>=0.28.1,<0.29.0)",
+    "watchfiles (>=1.1.1,<2.0.0)",
+    "html2image (>=2.0.7,<3.0.0)",
+    "weasyprint (>=66.0,<67.0)",
+    "pillow (>=12.0.0,<13.0.0)",
+    "pydantic (==2.6.3)",
+    "pydantic-settings (>=2.0.3,<3.0.0)",
+    "redis (>=7.1.0,<8.0.0)",
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
