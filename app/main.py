@@ -6,6 +6,7 @@ from watchfiles import run_process
 from config import settings
 from storage import create_redis_client, create_storage
 
+from bot.handlers import register_handlers
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -26,7 +27,7 @@ async def main():
     bot = Bot(token=settings.bot_token)
     dp = Dispatcher(storage=storage)
     
-
+    register_handlers(dp)
     await dp.start_polling(bot)
 
 

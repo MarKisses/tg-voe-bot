@@ -17,7 +17,8 @@ def create_redis_client() -> Redis:
 def create_storage(redis: Redis):
     return RedisStorage(redis=redis)
 
+
 user_storage = UserStorage(create_redis_client())
 
 
-__all__ = ["create_redis_client", "create_storage", "UserStorage", "user_storage"]
+__all__ = ["create_redis_client", "create_storage", "user_storage"]
