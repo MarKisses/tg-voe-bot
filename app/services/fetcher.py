@@ -1,6 +1,6 @@
 import httpx
 import logging
-from utils.fetch_wrapper import fetch
+from .utils.fetch_wrapper import fetch
 
 logger = logging.getLogger(__name__)
 
@@ -61,4 +61,8 @@ async def fetch_schedule(city_id: int, street_id: int, house_id: int):
     except httpx.HTTPError as e:
         logger.error("Failed to fetch schedule: %s", e)
         return []
-    return r.json()[3]["data"]
+    
+    with open("debug_schedule_response.json", "w", encoding="utf-8") as f:
+        f.write(str(r))
+
+    return r[3]["data"]

@@ -1,10 +1,10 @@
 import inspect
 import json
-from typing import  Optional
+from typing import Optional
 
 from redis.asyncio import Redis
 
-from services.models import Address
+from services.models import Address, ScheduleResponse
 
 
 class UserStorage:
@@ -50,7 +50,9 @@ class UserStorage:
 
         await pipe.execute()
 
-    async def get_address_by_id(self, user_id: int, address_id: str) -> Optional[Address]:
+    async def get_address_by_id(
+        self, user_id: int, address_id: str
+    ) -> Optional[Address]:
         addresses = await self.get_addresses(user_id)
         for addr in addresses:
             if addr.id == address_id:
@@ -80,4 +82,14 @@ class UserStorage:
         key = self._key(user_id)
         await self.r.delete(key)
 
-
+    async def set_cached_schedule(self, addr_id: str, data: dict, ttl=3600):
+        await self.r.set(f"schedule:{addr_id}", json.dumps(data), ex=ttl)
+        
+    async def get_cached_schedule(self, addr_id: str) -> dict | None:
+        raw = await self.r.get(f"schedule:{addr_id}")
+        if not raw:
+            return None
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError:
+            return None

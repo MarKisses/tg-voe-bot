@@ -28,7 +28,7 @@ class TextBox:
         min_font_size: int = 2,
         line_spacing: int = 4,
         align: Literal["center", "left", "right"] = "center",
-        font_path: str = "/app/bot/fonts/arial.ttf",
+        font_path: str = "app/services/utils/fonts/arial.ttf",
         valign: Literal["center", "top", "bottom"] = "center",
         fill: str = "black",
         padding_left: int = 0,

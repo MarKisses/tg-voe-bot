@@ -3,7 +3,7 @@ from typing import Optional
 
 from bs4 import BeautifulSoup
 
-from utils.parser_helpers import (
+from .utils.parser_helpers import (
     _confirm_from_classes,
     _fmt_time,
     _has_disconnection,
@@ -15,7 +15,7 @@ from .models import DaySchedule, FullCell, HalfCell, HourCell, ScheduleResponse
 
 
 def parse_schedule(
-    html: str, address: str, max_days: Optional[int] = None
+    html: str, address_name: str, max_days: Optional[int] = 2
 ) -> ScheduleResponse:
     soup = BeautifulSoup(html, "lxml")
 
@@ -26,7 +26,7 @@ def parse_schedule(
         )
     except StopIteration:
         return ScheduleResponse(
-            address=address,
+            address=address_name,
             disconnection_queue="Немає інформації про чергу відключень",
             disconnections=[],
         )
@@ -151,7 +151,7 @@ def parse_schedule(
         )
 
     formatted = {
-        "address": address,
+        "address": address_name,
         "disconnection_queue": queue,
         "disconnections": disconnection_days,
     }
