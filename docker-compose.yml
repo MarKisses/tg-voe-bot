@@ -10,7 +10,7 @@ services:
       - "8000:8000"
     restart: unless-stopped
     env_file:
-      - ./app/.env
+      - .env
     depends_on:
       - redis
 
@@ -23,7 +23,7 @@ services:
     volumes:
       - redis_data:/data
     env_file:
-      - ./app/.env
+      - .env
 
 volumes:
   redis_data:

@@ -75,6 +75,7 @@ async def street_select_callback(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(text="Введіть номер будинку")
     await callback.answer()
 
+
 @router.callback_query(lambda c: c.data.startswith("house_select:"))
 async def house_select_callback(callback: CallbackQuery, state: FSMContext):
     _, house_id = callback.data.split(":", 1)
@@ -94,7 +95,7 @@ async def house_select_callback(callback: CallbackQuery, state: FSMContext):
     await state.update_data(
         msg_id=callback.message.message_id, chat_id=callback.message.chat.id
     )
-    
+
     city = City.model_validate(data.get("chosen_city"))
     street = Street.model_validate(data.get("chosen_street"))
 
@@ -102,12 +103,11 @@ async def house_select_callback(callback: CallbackQuery, state: FSMContext):
     await user_storage.add_address(callback.from_user.id, address)
 
     await callback.message.edit_text(
-        text=f"{address.name}", reply_markup=day_list_keyboard(addr_id=address.id)
+        text=f"{address.name}", reply_markup=address_list_keyboard([address])
     )
     await callback.answer()
-    
-    
-    
+
+
 @router.callback_query(lambda c: c.data.startswith("select_address:"))
 async def select_address_callback(callback: CallbackQuery, state: FSMContext):
     _, address_id = callback.data.split(":", 1)
@@ -117,7 +117,7 @@ async def select_address_callback(callback: CallbackQuery, state: FSMContext):
             "Вибрана адреса не знайдена. Спробуйте ще раз."
         )
         return
-    
+
     raw = await fetch_schedule(address.city.id, address.street.id, address.house.id)
     parsed = parse_schedule(raw, address.name, max_days=2)
 
@@ -127,7 +127,8 @@ async def select_address_callback(callback: CallbackQuery, state: FSMContext):
         text=f"{address.name}", reply_markup=day_list_keyboard(address.id)
     )
     await callback.answer()
-    
+
+
 @router.callback_query(lambda c: c.data.startswith("day_select:"))
 async def day_select_callback(callback: CallbackQuery, state: FSMContext):
     _, day_offset, addr_id = callback.data.split(":", 2)
@@ -136,13 +137,21 @@ async def day_select_callback(callback: CallbackQuery, state: FSMContext):
     schedule_data = await user_storage.get_cached_schedule(addr_id)
     schedule = ScheduleResponse.model_validate(schedule_data)
 
-    buffered_file = BufferedInputFile(render_schedule_image(
-        day=schedule.disconnections[day_offset],
-        queue=schedule.disconnection_queue,
-        date=schedule.disconnections[day_offset].date,
-        address=schedule.address,
-    ).getvalue(), filename="schedule.png")
-    
-    new_media = InputMediaPhoto(media=buffered_file)
+    buffered_file = BufferedInputFile(
+        render_schedule_image(
+            day=schedule.disconnections[day_offset],
+            queue=schedule.disconnection_queue,
+            date=schedule.disconnections[day_offset].date,
+            address=schedule.address,
+        ).getvalue(),
+        filename="schedule.png",
+    )
 
-    await callback.message.edit_media(text=text, media=new_media, reply_markup=day_list_keyboard(addr_id))
+    await callback.message.answer_photo(
+        photo=buffered_file,
+    )
+
+    await callback.message.answer(
+        text=f"{schedule.address}", reply_markup=day_list_keyboard(addr_id)
+    )
+    await callback.answer()
