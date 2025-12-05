@@ -1,6 +1,6 @@
-from aiogram import Router, F
-from bot.menus.main import show_main
+from aiogram import Router
 from aiogram.types import CallbackQuery
+
 from bot.menus.address_list import show_address_list
 from bot.menus.main import show_main
 
