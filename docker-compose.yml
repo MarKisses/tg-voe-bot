@@ -25,5 +25,13 @@ services:
     env_file:
       - .env
 
+
+  flaresolver:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    restart: unless-stopped
+    container_name: tg_disconnection_bot_flaresolver
+    ports:
+      - "8191:8191"
+
 volumes:
   redis_data:

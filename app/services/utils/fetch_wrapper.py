@@ -1,21 +1,61 @@
 import httpx
 from config import settings
+from .flare_solver import solve_challenge
 
 
-async def fetch(url: str, params: dict | None = None, data: dict | None = None, method: str = "GET"):
-    headers = settings.fetcher.user_agent
-    cookie = settings.fetcher.cookie
+async def _attempt_request(
+    client: httpx.AsyncClient, method, url, headers, params, cookies, data
+):
+    return await client.request(
+        method=method,
+        url=url,
+        headers=headers,
+        params=params,
+        cookies=cookies,
+        data=data,
+        follow_redirects=True,
+    )
+
+
+async def fetch(
+    url: str, params: dict | None = None, data: dict | None = None, method: str = "GET"
+):
     base_url = settings.fetcher.base_url
+    headers = settings.fetcher.headers
+    cookie = settings.fetcher.cookie
 
-    async with httpx.AsyncClient(base_url=base_url) as client:
-        r = await client.request(
-            method,
-            url,
-            headers=headers,
-            params=params,
-            cookies={"cf_clearance": cookie} if cookie else None,
-            data=data,
-            follow_redirects=True,
-        )
-        r.raise_for_status()
-        return r.json()
+    cookies = {"cf_clearance": cookie} if cookie else None
+
+    async with httpx.AsyncClient(base_url=base_url, timeout=60) as client:
+        try:
+            r = await _attempt_request(
+                client, method, url, headers, params, cookies, data
+            )
+            r.raise_for_status()
+            return r.json()
+
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code != 403:
+                raise
+
+            print("🔥 Cloudflare challenge detected, using FlareSolverr…")
+
+            full_url = f"{base_url}{url}"
+            solution = await solve_challenge(full_url)
+
+            for c in solution["cookies"]:
+                if c["name"] == "cf_clearance":
+                    settings.fetcher.cookie = c["value"]
+                    print("📌 New cf_clearance set:", settings.fetcher.cookie)
+
+            if solution["user_agent"]:
+                settings.fetcher.user_agent = {"User-Agent": solution["user_agent"]}
+
+            new_headers = settings.fetcher.headers
+            new_cookies = {"cf_clearance": settings.fetcher.cookie}
+
+            r2 = await _attempt_request(
+                client, method, url, new_headers, params, new_cookies, data
+            )
+            r2.raise_for_status()
+            return r2.json()

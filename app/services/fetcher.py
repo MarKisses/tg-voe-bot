@@ -61,8 +61,5 @@ async def fetch_schedule(city_id: int, street_id: int, house_id: int):
     except httpx.HTTPError as e:
         logger.error("Failed to fetch schedule: %s", e)
         return []
-    
-    with open("debug_schedule_response.json", "w", encoding="utf-8") as f:
-        f.write(str(r))
 
     return r[3]["data"]

@@ -1,17 +1,37 @@
 from pydantic_settings import SettingsConfigDict, BaseSettings
+from pydantic import computed_field
+
 
 class Fetcher(BaseSettings):
-    
     base_url: str = "https://voe.com.ua/disconnection/detailed"
-    
+
     cookie: str | None = None
+
+    accept_encoding: dict[str, str] = {"Accept-Encoding": "gzip, deflate, br"}
+    accept_language: dict[str, str] = {
+        "Accept-Language": "en-US,en-GB;q=0.9,en;q=0.8,uk-UA;q=0.7,uk;q=0.6,ru-RU;q=0.5,ru;q=0.4"
+    }
     user_agent: dict[str, str] = {
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "en-US,en-GB;q=0.9,en;q=0.8,uk-UA;q=0.7,uk;q=0.6,ru-RU;q=0.5,ru;q=0.4",
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
     }
 
-    
+    @computed_field
+    @property
+    def headers(self) -> dict[str, str]:
+        headers = {**self.accept_encoding, **self.accept_language, **self.user_agent}
+        return headers
+
+
+class Flare(BaseSettings):
+    url: str = "http://flaresolver:8191/v1"
+
+
+class Redis(BaseSettings):
+    host: str = "redis"
+    port: int = 6379
+    db: int = 0
+    password: str | None = None
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -20,12 +40,11 @@ class Settings(BaseSettings):
     )
 
     bot_token: str | None = None
-    redis_host: str = "redis"
-    redis_port: int = 6379
-    redis_db: int = 0
-    redis_password: str | None = None
+    admin_id: int | None = None
 
     fetcher: Fetcher = Fetcher()
+    redis: Redis = Redis()
+    flare: Flare = Flare()
 
 
 settings = Settings()

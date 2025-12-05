@@ -7,10 +7,10 @@ from config import settings
 
 def create_redis_client() -> Redis:
     return Redis(
-        host=settings.redis_host,
-        port=settings.redis_port,
-        db=settings.redis_db,
-        password=settings.redis_password,
+        host=settings.redis.host,
+        port=settings.redis.port,
+        db=settings.redis.db,
+        password=settings.redis.password,
     )
 
 

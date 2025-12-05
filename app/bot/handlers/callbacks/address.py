@@ -5,14 +5,20 @@ from aiogram.fsm.context import FSMContext
 from services.models import City, Street, House, Address, ScheduleResponse
 from services import fetch_schedule, parse_schedule, render_schedule_image
 from storage import user_storage
-from bot.keyboards.address_list import address_list_keyboard, day_list_keyboard
+from bot.keyboards.address_list import address_list_keyboard, day_list_keyboard, full_address_keyboard
 from aiogram.types import BufferedInputFile, InputMediaPhoto
+from logging import getLogger
+from aiogram.utils.chat_action import ChatActionSender
+from aiogram.enums import ChatAction
+
+logger = getLogger(__name__)
 
 router = Router(name=__name__)
 
 
 @router.callback_query(lambda c: c.data.startswith("city:"))
 async def city_callback(callback: CallbackQuery, state: FSMContext):
+    logger.info(f"User {callback.from_user.id} selected city: {callback.data}")
     _, city = callback.data.split(":", 1)
     await state.update_data(
         msg_id=callback.message.message_id, chat_id=callback.message.chat.id
@@ -30,6 +36,7 @@ async def city_callback(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(lambda c: c.data.startswith("city_select:"))
 async def city_select_callback(callback: CallbackQuery, state: FSMContext):
+    logger.info(f"User {callback.from_user.id} selected city: {callback.data}")
     _, city_id = callback.data.split(":", 1)
     city_id = int(city_id)
     data = await state.get_data()
@@ -54,6 +61,7 @@ async def city_select_callback(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(lambda c: c.data.startswith("street_select:"))
 async def street_select_callback(callback: CallbackQuery, state: FSMContext):
+    logger.info(f"User {callback.from_user.id} selected street: {callback.data}")
     _, street_id = callback.data.split(":", 1)
     street_id = int(street_id)
     data = await state.get_data()
@@ -78,6 +86,7 @@ async def street_select_callback(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(lambda c: c.data.startswith("house_select:"))
 async def house_select_callback(callback: CallbackQuery, state: FSMContext):
+    logger.info(f"User {callback.from_user.id} selected house: {callback.data}")
     _, house_id = callback.data.split(":", 1)
     house_id = int(house_id)
     data = await state.get_data()
@@ -109,7 +118,8 @@ async def house_select_callback(callback: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(lambda c: c.data.startswith("select_address:"))
-async def select_address_callback(callback: CallbackQuery, state: FSMContext):
+async def address_menu_callback(callback: CallbackQuery, state: FSMContext):
+    logger.info(f"User {callback.from_user.id} selected address: {callback.data}")
     _, address_id = callback.data.split(":", 1)
     address = await user_storage.get_address_by_id(callback.from_user.id, address_id)
     if not address:
@@ -118,8 +128,29 @@ async def select_address_callback(callback: CallbackQuery, state: FSMContext):
         )
         return
 
-    raw = await fetch_schedule(address.city.id, address.street.id, address.house.id)
-    parsed = parse_schedule(raw, address.name, max_days=2)
+    await callback.message.edit_text(
+        text=f"{address.name}", reply_markup=full_address_keyboard(address.id, False)
+    )
+    await callback.answer()
+
+
+@router.callback_query(lambda c: c.data.startswith("schedule:"))
+async def select_address_callback(callback: CallbackQuery, state: FSMContext):
+    logger.info(f"User {callback.from_user.id} selected address: {callback.data}")
+    _, address_id = callback.data.split(":", 1)
+    address = await user_storage.get_address_by_id(callback.from_user.id, address_id)
+    if not address:
+        await callback.message.edit_text(
+            "Вибрана адреса не знайдена. Спробуйте ще раз."
+        )
+        return
+
+    await callback.message.edit_text(text="Сасу, пержу, графік палучітб хачю...")
+    async with ChatActionSender(
+        bot=callback.bot, chat_id=callback.message.chat.id, action=ChatAction.TYPING
+    ):
+        raw = await fetch_schedule(address.city.id, address.street.id, address.house.id)
+        parsed = parse_schedule(raw, address.name, max_days=2)
 
     await user_storage.set_cached_schedule(address.id, parsed.model_dump())
 
@@ -131,6 +162,7 @@ async def select_address_callback(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(lambda c: c.data.startswith("day_select:"))
 async def day_select_callback(callback: CallbackQuery, state: FSMContext):
+    logger.info(f"User {callback.from_user.id} selected day: {callback.data}")
     _, day_offset, addr_id = callback.data.split(":", 2)
     day_offset = int(day_offset)
 
@@ -146,6 +178,8 @@ async def day_select_callback(callback: CallbackQuery, state: FSMContext):
         ).getvalue(),
         filename="schedule.png",
     )
+    
+    await callback.message.delete()
 
     await callback.message.answer_photo(
         photo=buffered_file,
@@ -153,5 +187,32 @@ async def day_select_callback(callback: CallbackQuery, state: FSMContext):
 
     await callback.message.answer(
         text=f"{schedule.address}", reply_markup=day_list_keyboard(addr_id)
+    )
+    await callback.answer()
+    
+@router.callback_query(lambda c: c.data.startswith("delete_address:"))
+async def delete_address_callback(callback: CallbackQuery, state: FSMContext):
+    logger.info(f"User {callback.from_user.id} requested to delete address: {callback.data}")
+    _, address_id = callback.data.split(":", 1)
+    address = await user_storage.get_address_by_id(callback.from_user.id, address_id)
+    if not address:
+        await callback.message.edit_text(
+            "Вибрана адреса не знайдена. Спробуйте ще раз."
+        )
+        return
+
+    await user_storage.remove_address(callback.from_user.id, address_id)
+
+    addresses = await user_storage.get_addresses(callback.from_user.id)
+    if not addresses:
+        await callback.message.edit_text(
+            text="У вас немає збережених адрес.",
+            reply_markup=address_list_keyboard(None),
+        )
+        await callback.answer()
+        return
+
+    await callback.message.edit_text(
+        text="Список ваших адрес:", reply_markup=address_list_keyboard(addresses)
     )
     await callback.answer()

@@ -22,6 +22,4 @@ async def show_address_list(source: CallbackQuery):
         await source.answer()
         return
 
-    await source.answer(
-        text="Список ваших адрес:", reply_markup=address_list_keyboard(addresses)
-    )
+    
