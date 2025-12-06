@@ -49,6 +49,9 @@ class SubscriptionStorage:
         if inspect.isawaitable(raw := self.r.smembers(self._addr_key(kind, addr_id))):
             raw = await raw
         return [int(x) for x in raw]
+    
+    async def get_all_addresses(self) -> set[str]:
+        return {*await self.get_all_addresses_for_kind("today"), *await self.get_all_addresses_for_kind("tomorrow")}
 
     async def get_all_addresses_for_kind(
         self,
@@ -69,7 +72,7 @@ class SubscriptionStorage:
         self,
         addr_id: str,
         kind: SubscriptionKind,
-    ) -> str | None:
+    ) -> bytes | None:
         return await self.r.get(self._hash_key(kind, addr_id))
 
     async def set_last_hash(

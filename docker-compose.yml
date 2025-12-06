@@ -9,6 +9,8 @@ services:
     ports:
       - "8000:8000"
     restart: unless-stopped
+    environment:
+      - TZ=Europe/Kyiv
     env_file:
       - .env
     depends_on:
