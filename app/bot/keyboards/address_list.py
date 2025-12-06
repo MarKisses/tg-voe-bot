@@ -59,7 +59,7 @@ def houses_list_keyboard(houses: list[House]) -> InlineKeyboardMarkup:
     return kb.as_markup()
 
 
-def full_address_keyboard(addr_id: str, subscribed: bool) -> InlineKeyboardMarkup:
+def full_address_keyboard(addr_id: str) -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     kb.row(
         InlineKeyboardButton(
@@ -68,10 +68,8 @@ def full_address_keyboard(addr_id: str, subscribed: bool) -> InlineKeyboardMarku
     )
     kb.row(
         InlineKeyboardButton(
-            text="Відписатися від сповіщень ❌"
-            if subscribed
-            else "Підписатися на сповіщення ✅",
-            callback_data=f"{'unsubscribe' if subscribed else 'subscribe'}:{addr_id}",
+            text="Сповіщення 🔔",
+            callback_data=f"subscriptions:{addr_id}",
         )
     )
     kb.row(InlineKeyboardButton(text="Видалити адресу ❌", callback_data=f"delete_address:{addr_id}"))

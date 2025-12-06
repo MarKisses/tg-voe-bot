@@ -1,15 +1,20 @@
-from aiogram import Router
-from bot.states.AddressState import AddressState
-from aiogram.types import CallbackQuery
-from aiogram.fsm.context import FSMContext
-from services.models import City, Street, House, Address, ScheduleResponse
-from services import fetch_schedule, parse_schedule, render_schedule_image
-from storage import user_storage
-from bot.keyboards.address_list import address_list_keyboard, day_list_keyboard, full_address_keyboard
-from aiogram.types import BufferedInputFile, InputMediaPhoto
 from logging import getLogger
-from aiogram.utils.chat_action import ChatActionSender
+
+from aiogram import Router
 from aiogram.enums import ChatAction
+from aiogram.fsm.context import FSMContext
+from aiogram.types import BufferedInputFile, CallbackQuery
+from aiogram.utils.chat_action import ChatActionSender
+from services import fetch_schedule, parse_schedule, render_schedule_image
+from services.models import Address, City, House, ScheduleResponse, Street
+from storage import user_storage
+
+from bot.keyboards.address_list import (
+    address_list_keyboard,
+    day_list_keyboard,
+    full_address_keyboard,
+)
+from bot.states.AddressState import AddressState
 
 logger = getLogger(__name__)
 
@@ -129,7 +134,7 @@ async def address_menu_callback(callback: CallbackQuery, state: FSMContext):
         return
 
     await callback.message.edit_text(
-        text=f"{address.name}", reply_markup=full_address_keyboard(address.id, False)
+        text=f"{address.name}", reply_markup=full_address_keyboard(address.id)
     )
     await callback.answer()
 
@@ -178,7 +183,7 @@ async def day_select_callback(callback: CallbackQuery, state: FSMContext):
         ).getvalue(),
         filename="schedule.png",
     )
-    
+
     await callback.message.delete()
 
     await callback.message.answer_photo(
@@ -189,10 +194,13 @@ async def day_select_callback(callback: CallbackQuery, state: FSMContext):
         text=f"{schedule.address}", reply_markup=day_list_keyboard(addr_id)
     )
     await callback.answer()
-    
+
+
 @router.callback_query(lambda c: c.data.startswith("delete_address:"))
 async def delete_address_callback(callback: CallbackQuery, state: FSMContext):
-    logger.info(f"User {callback.from_user.id} requested to delete address: {callback.data}")
+    logger.info(
+        f"User {callback.from_user.id} requested to delete address: {callback.data}"
+    )
     _, address_id = callback.data.split(":", 1)
     address = await user_storage.get_address_by_id(callback.from_user.id, address_id)
     if not address:

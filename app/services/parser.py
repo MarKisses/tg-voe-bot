@@ -1,5 +1,8 @@
 from datetime import datetime, timedelta
 from typing import Optional
+import logging
+
+logger = logging.getLogger(__name__)
 
 from bs4 import BeautifulSoup
 
@@ -47,6 +50,7 @@ def parse_schedule(
 
     for i, _ in enumerate(days_to_parse):
         day_date = (datetime.now() + timedelta(days=i)).date().isoformat()
+        logger.info(f"Parsing schedule for date: {day_date}")
 
         day_rows = []
         day_has_disconnections = (

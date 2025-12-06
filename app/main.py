@@ -1,17 +1,18 @@
+import asyncio
 import logging
 
 from aiogram import Bot, Dispatcher
+from bot.handlers import register_handlers
+from config import settings
+from services.notification_worker import notification_worker
+from storage import create_redis_client, create_storage
 from watchfiles import run_process
 
-from config import settings
-from storage import create_redis_client, create_storage
-
-from bot.handlers import register_handlers
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", force=True, datefmt="%Y-%m-%d %H:%M:%S"
+)
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
 
 
 async def main():
@@ -26,8 +27,10 @@ async def main():
 
     bot = Bot(token=settings.bot_token)
     dp = Dispatcher(storage=storage)
-    
+
+    logger.info("Starting bot...")
     register_handlers(dp)
+    asyncio.create_task(notification_worker(bot, interval_seconds=900))
     await dp.start_polling(bot)
 
 
