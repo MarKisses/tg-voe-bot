@@ -4,6 +4,7 @@ from typing import Literal
 
 from aiogram import Bot
 from aiogram.types.input_file import BufferedInputFile
+from bot.keyboards.main_menu import main_menu_keyboard
 from storage import subscription_storage, user_storage
 
 from services.fetcher import fetch_schedule
@@ -25,33 +26,49 @@ def _calc_hash(obj: dict) -> str:
     return hashlib.sha256(obj_str.encode("utf-8")).hexdigest()
 
 
+# !TODO: optimize by checking when tomorrow's schedule becomes today's
 async def _update_hashes_for_address(addr_id: str, schedule: ScheduleResponse):
+    disconnections = schedule.disconnections
     changed = []
 
-    disconnections = schedule.disconnections
+    today_old = await subscription_storage.get_last_hash(addr_id, "today")
+    tomorrow_old = await subscription_storage.get_last_hash(addr_id, "tomorrow")
+
+    if today_old is not None:
+        today_old = today_old.decode("utf-8")
+    if tomorrow_old is not None:
+        tomorrow_old = tomorrow_old.decode("utf-8")
 
     # today
     if len(disconnections) >= 1:
-        today = disconnections[0]
-        today_hash = _calc_hash(today.model_dump())
-        old = await subscription_storage.get_last_hash(addr_id, "today")
-        if not old:
-            old = b""
-        if today_hash != old.decode("utf-8"):
+        today = disconnections[0].model_dump()
+        today_hash = _calc_hash(today)
+
+        # Когда пользователь только добавил подписку, мы не хотим слать ему уведомление сразу
+        if today_old is None:
+            await subscription_storage.set_last_hash(addr_id, "today", today_hash)
+        elif today_hash != today_old:
             await subscription_storage.set_last_hash(addr_id, "today", today_hash)
             changed.append("today")
 
     # tomorrow
     if len(disconnections) >= 2:
         tomorrow = disconnections[1]
-        tomorrow_hash = _calc_hash(tomorrow.model_dump())
-        old = await subscription_storage.get_last_hash(addr_id, "tomorrow")
-        if not old:
-            old = b""
-        if tomorrow_hash != old.decode("utf-8"):
+        tomorrow_data = tomorrow.model_dump()
+        tomorrow_hash = _calc_hash(tomorrow_data)
+
+        # Когда пользователь только добавил подписку, мы не хотим слать ему уведомление сразу
+        if tomorrow_old is None:
+            await subscription_storage.set_last_hash(addr_id, "tomorrow", tomorrow_hash)
+        elif tomorrow_hash != tomorrow_old and tomorrow.has_disconnections:
             await subscription_storage.set_last_hash(addr_id, "tomorrow", tomorrow_hash)
             changed.append("tomorrow")
 
+    # При переходе дня, когда вчерашний завтрашний становится сегодняшним
+    # и хэши совпадают, не слать двойное уведомление
+    if today_old and tomorrow_old:
+        if today_old == tomorrow_old and "today" in changed:
+            changed.remove("today")
     return changed
 
 
@@ -90,7 +107,9 @@ async def _process_for_address(
         )
         for uid in subscribers_today:
             await bot.send_message(uid, msg)
-            await bot.send_photo(uid, photo=buffered_file)
+            await bot.send_photo(
+                uid, photo=buffered_file, reply_markup=main_menu_keyboard()
+            )
 
     if "tomorrow" in changed:
         msg = f"📅 Появився/оновився графік на завтра за адресою {address.name}."
@@ -105,7 +124,9 @@ async def _process_for_address(
         )
         for uid in subscribers_tomorrow:
             await bot.send_message(uid, msg)
-            await bot.send_photo(uid, photo=buffered_file)
+            await bot.send_photo(
+                uid, photo=buffered_file, reply_markup=main_menu_keyboard()
+            )
 
 
 async def notification_worker(bot: Bot, interval_seconds: int = 900) -> None:
