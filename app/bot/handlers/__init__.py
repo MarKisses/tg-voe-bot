@@ -1,6 +1,6 @@
 from aiogram import Dispatcher
 
-from .commands.start import router as start_router
+from .main_menu import router as start_router
 from .commands.admin import router as admin_router
 from .callbacks import go_router, back_router, address_router, subscriptions_router
 from .address_flow import address_router as address_flow_router
