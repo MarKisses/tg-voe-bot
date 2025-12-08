@@ -7,12 +7,9 @@ from config import settings
 from services.notification_worker import notification_worker
 from storage import create_redis_client, create_storage
 from watchfiles import run_process
+from logger import create_logger
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", force=True, datefmt="%Y-%m-%d %H:%M:%S"
-)
-
-logger = logging.getLogger(__name__)
+logger = create_logger(__name__)
 
 
 async def main():
@@ -20,7 +17,7 @@ async def main():
     storage = create_storage(redis)
 
     if not settings.bot_token:
-        logging.error(
+        logger.error(
             "Bot token is not set. Please set BOT_TOKEN environment variable."
         )
         return
