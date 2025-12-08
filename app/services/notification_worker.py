@@ -66,8 +66,8 @@ async def _update_hashes_for_address(addr_id: str, schedule: ScheduleResponse):
 
     # При переходе дня, когда вчерашний завтрашний становится сегодняшним
     # и хэши совпадают, не слать двойное уведомление
-    if today_old and tomorrow_old:
-        if today_old == tomorrow_old and "today" in changed:
+    if today_hash and tomorrow_old:
+        if today_hash == tomorrow_old and "today" in changed:
             changed.remove("today")
     return changed
 

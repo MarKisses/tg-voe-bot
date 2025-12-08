@@ -9,3 +9,8 @@ def main_menu_keyboard() -> InlineKeyboardMarkup:
     kb.button(text="Допомога", callback_data="go:help")
     kb.adjust(1)
     return kb.as_markup()
+
+def back_to_main_menu_keyboard() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(text="⬅️ Назад до головного меню", callback_data="back:main_menu")
+    return kb.as_markup()

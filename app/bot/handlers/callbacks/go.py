@@ -1,6 +1,7 @@
 from aiogram import Router, F
 from bot.menus.address_list import show_address_list
 from bot.menus.address_flow.address import ask_city
+from bot.menus.about import show_info
 from aiogram.types import CallbackQuery
 from aiogram.fsm.context import FSMContext
 from bot.states.AddressState import AddressState
@@ -18,4 +19,8 @@ async def go_callback(callback: CallbackQuery, state: FSMContext):
         
     if action == "add_address":
         await ask_city(callback, state)
+        
+    if action == "bot_info":
+        await show_info(callback)
+        
     await callback.answer()
