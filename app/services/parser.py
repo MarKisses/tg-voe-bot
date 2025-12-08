@@ -1,11 +1,10 @@
 from datetime import datetime, timedelta
 from typing import Optional
-import logging
-
-logger = logging.getLogger(__name__)
 
 from bs4 import BeautifulSoup
+from logger import create_logger
 
+from .models import DaySchedule, FullCell, HalfCell, HourCell, ScheduleResponse
 from .utils.parser_helpers import (
     _confirm_from_classes,
     _fmt_time,
@@ -14,7 +13,7 @@ from .utils.parser_helpers import (
     _safe_get_classes,
 )
 
-from .models import DaySchedule, FullCell, HalfCell, HourCell, ScheduleResponse
+logger = create_logger(__name__)
 
 
 def parse_schedule(

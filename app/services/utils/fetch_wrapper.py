@@ -2,6 +2,9 @@ import httpx
 from config import settings
 from .flare_solver import solve_challenge
 
+from logger import create_logger
+logger = create_logger(__name__)
+
 
 async def _attempt_request(
     client: httpx.AsyncClient, method, url, headers, params, cookies, data
@@ -38,7 +41,7 @@ async def fetch(
             if e.response.status_code != 403:
                 raise
 
-            print("🔥 Cloudflare challenge detected, using FlareSolverr…")
+            logger.info("🔥 Cloudflare challenge detected, using FlareSolverr…")
 
             full_url = f"{base_url}{url}"
             solution = await solve_challenge(full_url)
@@ -46,7 +49,6 @@ async def fetch(
             for c in solution["cookies"]:
                 if c["name"] == "cf_clearance":
                     settings.fetcher.cookie = c["value"]
-                    print("📌 New cf_clearance set:", settings.fetcher.cookie)
 
             if solution["user_agent"]:
                 settings.fetcher.user_agent = {"User-Agent": solution["user_agent"]}

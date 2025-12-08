@@ -1,8 +1,8 @@
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery
+from storage import user_storage
 
 from bot.keyboards import address_list_keyboard
-from storage import user_storage
-from aiogram.types import Message
 
 
 async def show_address_list(source: CallbackQuery):
@@ -14,12 +14,13 @@ async def show_address_list(source: CallbackQuery):
         )
         return
 
-    if isinstance(source, CallbackQuery):
+    try:
         # await source.message.
         await source.message.edit_text(
             text="Список ваших адрес:", reply_markup=address_list_keyboard(addresses)
         )
         await source.answer()
-        return
-
-    
+    except TelegramBadRequest:
+        await source.message.reply(
+            text="Список ваших адрес:", reply_markup=address_list_keyboard(addresses)
+        )

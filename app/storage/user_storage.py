@@ -4,7 +4,7 @@ from typing import Optional
 
 from redis.asyncio import Redis
 
-from services.models import Address, ScheduleResponse
+from services.models import Address
 
 
 class UserStorage:

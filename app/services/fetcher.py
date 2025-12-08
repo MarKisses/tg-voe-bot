@@ -1,8 +1,9 @@
 import httpx
-import logging
 from .utils.fetch_wrapper import fetch
 
-logger = logging.getLogger(__name__)
+from logger import create_logger
+
+logger = create_logger(__name__)
 
 
 async def fetch_cities(query: str | None):

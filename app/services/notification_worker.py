@@ -26,7 +26,6 @@ def _calc_hash(obj: dict) -> str:
     return hashlib.sha256(obj_str.encode("utf-8")).hexdigest()
 
 
-# !TODO: optimize by checking when tomorrow's schedule becomes today's
 async def _update_hashes_for_address(addr_id: str, schedule: ScheduleResponse):
     disconnections = schedule.disconnections
     changed = []
@@ -44,7 +43,7 @@ async def _update_hashes_for_address(addr_id: str, schedule: ScheduleResponse):
         today = disconnections[0].model_dump()
         today_hash = _calc_hash(today)
 
-        # Когда пользователь только добавил подписку, мы не хотим слать ему уведомление сразу
+        # If user just added subscription, do not send notification immediately
         if today_old is None:
             await subscription_storage.set_last_hash(addr_id, "today", today_hash)
         elif today_hash != today_old:
@@ -57,15 +56,14 @@ async def _update_hashes_for_address(addr_id: str, schedule: ScheduleResponse):
         tomorrow_data = tomorrow.model_dump()
         tomorrow_hash = _calc_hash(tomorrow_data)
 
-        # Когда пользователь только добавил подписку, мы не хотим слать ему уведомление сразу
+        # If user just added subscription, do not send notification immediately
         if tomorrow_old is None:
             await subscription_storage.set_last_hash(addr_id, "tomorrow", tomorrow_hash)
         elif tomorrow_hash != tomorrow_old and tomorrow.has_disconnections:
             await subscription_storage.set_last_hash(addr_id, "tomorrow", tomorrow_hash)
             changed.append("tomorrow")
 
-    # При переходе дня, когда вчерашний завтрашний становится сегодняшним
-    # и хэши совпадают, не слать двойное уведомление
+    # When new today is same as old tomorrow, we consider that there is no change in today
     if today_hash and tomorrow_old:
         if today_hash == tomorrow_old and "today" in changed:
             changed.remove("today")
@@ -78,19 +76,18 @@ async def _process_for_address(
     subscribers_today: list[int],
     subscribers_tomorrow: list[int],
 ):
-    # достаём city, street, house
     city_id, street_id, house_id = map(int, addr_id.split("-"))
 
-    # 1) fetch schedule
     raw = await fetch_schedule(city_id, street_id, house_id)
 
-    # 2) parse
     address = await user_storage.get_address_by_id(
         subscribers_today[0] if subscribers_today else subscribers_tomorrow[0], addr_id
     )
+    if not address:
+        logger.warning(f"Address {addr_id} not found in user storage")
+        return
     schedule = parse_schedule(raw, address.name, max_days=2)
 
-    # 3) update hashes for both today & tomorrow
     changed = await _update_hashes_for_address(addr_id, schedule)
 
     # 4) sending messages

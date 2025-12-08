@@ -1,12 +1,13 @@
 from typing import Literal
+
 from PIL import ImageDraw, ImageFont
-from services.models import HalfCell, FullCell
+from services.models import FullCell, HalfCell
 
 COLOR_BG = (255, 255, 255)
 COLOR_GRID = (0, 0, 0)
-COLOR_OFF = (0, 150, 220)  # синий
-COLOR_POSSIBLE = (240, 180, 0)  # желтый
-COLOR_OK = (230, 230, 230)  # серый
+COLOR_OFF = (0, 150, 220)  # blue
+COLOR_POSSIBLE = (240, 180, 0)  # yellow
+COLOR_OK = (230, 230, 230)  # gray
 
 
 def half_color(h: HalfCell | FullCell):
@@ -54,14 +55,14 @@ class TextBox:
         self.padding_top = padding_top
         self.padding_bottom = padding_bottom
 
-        # рабочие размеры области
+        # inner dimensions
         self.inner_width = width - padding_left - padding_right
         self.inner_height = height - padding_top - padding_bottom
 
     def draw_text(self, text: str):
         font_size = self.max_font_size
 
-        # Уменьшаем шрифт пока текст не влезет
+        # Determine font size that fits in the box
         while font_size >= self.min_font_size:
             font = ImageFont.truetype(self.font_path, font_size)
             lines = self._wrap_text(text, font)
@@ -72,13 +73,13 @@ class TextBox:
 
             font_size -= 1
 
-        # если не влезло — рисуем минимальным шрифтом
+        # If we exit the loop without finding a fitting size, use min_font_size
         if font_size < self.min_font_size:
             font = ImageFont.truetype(self.font_path, self.min_font_size)
             lines = self._wrap_text(text, font)
             total_h, max_w, heights = self._measure_lines(lines, font)
 
-        # === Вертикальное позиционирование ===
+        # Vertical alignment
         if self.valign == "center":
             y = self.y + self.padding_top + (self.inner_height - total_h) / 2
         elif self.valign == "top":
@@ -88,11 +89,11 @@ class TextBox:
         else:
             y = self.y + self.padding_top
 
-        # === Рисуем строки ===
+        # Draw text lines
         for line, h in zip(lines, heights):
             w = self._draw.textlength(line, font)
 
-            # Горизонталь
+            # Horizontal alignment
             if self.align == "center":
                 x = self.x + self.padding_left + (self.inner_width - w) / 2
             elif self.align == "left":
