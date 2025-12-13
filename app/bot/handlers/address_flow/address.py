@@ -1,11 +1,17 @@
-from aiogram import Router
-from bot.states.AddressState import AddressState
-from aiogram.types import Message
-from aiogram.fsm.context import FSMContext
-from services.models import City, Street, House
-from services.fetcher import fetch_cities, fetch_streets, fetch_houses
-from bot.keyboards.address_list import cities_list_keyboard, streets_list_keyboard, houses_list_keyboard
 import logging
+
+from aiogram import Router
+from aiogram.fsm.context import FSMContext
+from aiogram.types import Message
+from services.fetcher import fetch_cities, fetch_houses, fetch_streets
+from services.models import City, House, Street
+
+from bot.keyboards.address_list import (
+    cities_list_keyboard,
+    houses_list_keyboard,
+    streets_list_keyboard,
+)
+from bot.states.AddressState import AddressState
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +77,7 @@ async def choose_street_handler(message: Message, state: FSMContext):
         chat_id=chat_id,
         message_id=msg_id,
     )
+
 
 @router.message(AddressState.choosing_house)
 async def choose_house_handler(message: Message, state: FSMContext):

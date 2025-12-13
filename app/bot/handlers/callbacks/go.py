@@ -17,7 +17,7 @@ async def go_callback(callback: CallbackQuery, state: FSMContext):
     _, action = callback.data.split(":", 1)
 
     if action == "address_list":
-        await show_address_list(callback)
+        await show_address_list(callback, state)
 
     if action == "add_address":
         await ask_city(callback, state)

@@ -72,7 +72,7 @@ class SubscriptionStorage:
         addr_ids: list[str] = []
         async for key in self.r.scan_iter(pattern):
             # key типа b"subs:today:addr:510100000-1444-32599"
-            parts = key.decode().split(":")
+            parts = key.split(":")
             addr_ids.append(parts[-1])
         return addr_ids
 

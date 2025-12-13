@@ -2,7 +2,7 @@ services:
   bot:
     build:
       context: .
-      dockerfile: docker/bot/Dockerfile
+      dockerfile: ./Dockerfile
     container_name: tg_disconnection_bot
     volumes:
       - ./app:/sasalka/app
@@ -13,19 +13,19 @@ services:
       - TZ=Europe/Kyiv
     env_file:
       - .env
-    depends_on:
-      - redis
+    # depends_on:
+    #   - redis
 
-  redis:
-    image: "redis:alpine"
-    container_name: tg_disconnection_bot_redis
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    env_file:
-      - .env
+  # redis:
+  #   image: "redis:alpine"
+  #   container_name: tg_disconnection_bot_redis
+  #   restart: unless-stopped
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   env_file:
+  #     - .env
 
 
   flaresolver:
@@ -35,5 +35,5 @@ services:
     ports:
       - "8191:8191"
 
-volumes:
-  redis_data:
+# volumes:
+#   redis_data:

@@ -1,11 +1,13 @@
 from aiogram.exceptions import TelegramBadRequest
+from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 from storage import user_storage
 
 from bot.keyboards import address_list_keyboard
 
 
-async def show_address_list(source: CallbackQuery):
+async def show_address_list(source: CallbackQuery, state: FSMContext):
+    await state.clear()
     addresses = await user_storage.get_addresses(source.from_user.id)
     if not addresses:
         await source.message.edit_text(

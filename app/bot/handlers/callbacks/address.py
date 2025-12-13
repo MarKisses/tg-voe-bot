@@ -119,6 +119,8 @@ async def house_select_callback(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(
         text=f"{address.name}", reply_markup=address_list_keyboard([address])
     )
+    
+    await state.clear()
     await callback.answer()
 
 

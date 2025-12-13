@@ -30,6 +30,7 @@ class Redis(BaseSettings):
     host: str = "redis"
     port: int = 6379
     db: int = 0
+    username: str = "default"
     password: str | None = None
 
 

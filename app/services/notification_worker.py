@@ -34,9 +34,9 @@ async def _update_hashes_for_address(addr_id: str, schedule: ScheduleResponse):
     tomorrow_old = await subscription_storage.get_last_hash(addr_id, "tomorrow")
 
     if today_old is not None:
-        today_old = today_old.decode("utf-8")
+        today_old = today_old
     if tomorrow_old is not None:
-        tomorrow_old = tomorrow_old.decode("utf-8")
+        tomorrow_old = tomorrow_old
 
     # today
     if len(disconnections) >= 1:
@@ -107,6 +107,7 @@ async def _process_for_address(
             await bot.send_photo(
                 uid, photo=buffered_file, reply_markup=main_menu_keyboard()
             )
+            logger.info(f"Sent notification to user {uid} for address {addr_id} today")
 
     if "tomorrow" in changed:
         msg = f"📅 Появився/оновився графік на завтра за адресою {address.name}."
@@ -124,6 +125,7 @@ async def _process_for_address(
             await bot.send_photo(
                 uid, photo=buffered_file, reply_markup=main_menu_keyboard()
             )
+            logger.info(f"Sent notification to user {uid} for address {addr_id} tomorrow")
 
 
 async def notification_worker(bot: Bot, interval_seconds: int = 900) -> None:
