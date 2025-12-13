@@ -29,7 +29,7 @@ async def fetch(
 
     cookies = {"cf_clearance": cookie} if cookie else None
 
-    async with httpx.AsyncClient(base_url=base_url, timeout=60) as client:
+    async with httpx.AsyncClient(base_url=base_url, timeout=150) as client:
         try:
             r = await _attempt_request(
                 client, method, url, headers, params, cookies, data
