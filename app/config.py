@@ -58,9 +58,7 @@ class Settings(BaseSettings):
 
     bot_token: str | None = None
     bot_mode: Literal["polling", "webhook"] = "polling"
-    
-    
-    
+
     admin_id: int | None = None
 
     fetcher: Fetcher = Fetcher()

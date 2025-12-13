@@ -57,6 +57,8 @@ async def run_webhook():
     
     logger.info("Starting webhook server...")
 
+    await asyncio.Event().wait()
+
 
 async def main():
     if settings.bot_mode == "polling":
