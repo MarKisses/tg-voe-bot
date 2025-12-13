@@ -1,5 +1,6 @@
 from pydantic_settings import SettingsConfigDict, BaseSettings
 from pydantic import computed_field
+from typing import Literal
 
 
 class Fetcher(BaseSettings):
@@ -26,12 +27,27 @@ class Flare(BaseSettings):
     url: str = "http://flaresolver:8191/v1"
 
 
+class Notification(BaseSettings):
+    interval: int = 900
+
+
 class Redis(BaseSettings):
     host: str = "redis"
     port: int = 6379
     db: int = 0
     username: str = "default"
     password: str | None = None
+    
+class Webhook(BaseSettings):
+    url: str = "http://googlecloudrun.com"
+    path: str = "/webhook"
+    secret_token: str | None = None
+    port: int = 8080
+
+    @computed_field
+    @property
+    def full_url(self) -> str:
+        return f"{self.url}{self.path}"
 
 
 class Settings(BaseSettings):
@@ -41,11 +57,17 @@ class Settings(BaseSettings):
     )
 
     bot_token: str | None = None
+    bot_mode: Literal["polling", "webhook"] = "polling"
+    
+    
+    
     admin_id: int | None = None
 
     fetcher: Fetcher = Fetcher()
     redis: Redis = Redis()
     flare: Flare = Flare()
+    notification: Notification = Notification()
+    webhook: Webhook = Webhook()
 
 
 settings = Settings()
