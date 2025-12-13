@@ -1,14 +1,15 @@
 import asyncio
+import os
 
 from aiogram import Bot, Dispatcher
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+from aiohttp.web import Application, AppRunner, TCPSite
 from bot.handlers import register_handlers
 from config import settings
 from logger import create_logger
 from services.notification_worker import notification_worker
 from storage import create_redis_client, create_storage
-from aiohttp.web import Application
 from watchfiles import run_process
-from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 
 logger = create_logger(__name__)
 
@@ -49,14 +50,25 @@ async def run_webhook():
     )
 
     setup_application(app, dp, bot=bot)
-    
+
     await bot.set_webhook(
         url=settings.webhook.full_url,
         secret_token=settings.webhook.secret_token,
     )
-    
+
     logger.info("Starting webhook server...")
 
+    port = int(os.environ.get("PORT", 8000))
+
+    logger.info("Starting aiohttp webhook server on port %s", port)
+
+    runner = AppRunner(app)
+    await runner.setup()
+
+    site = TCPSite(runner, host="0.0.0.0", port=port)
+    await site.start()
+
+    # Cloud Run любит, когда процесс живёт
     await asyncio.Event().wait()
 
 
@@ -65,7 +77,6 @@ async def main():
         await run_polling()
     elif settings.bot_mode == "webhook":
         await run_webhook()
-        
 
 
 def run():
