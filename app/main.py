@@ -3,7 +3,7 @@ import os
 
 from aiogram import Bot, Dispatcher
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
-from aiohttp.web import Application, AppRunner, TCPSite
+from aiohttp.web import Application, AppRunner, TCPSite, Response
 from bot.handlers import register_handlers
 from config import settings
 from logger import create_logger
@@ -12,6 +12,10 @@ from storage import create_redis_client, create_storage
 from watchfiles import run_process
 
 logger = create_logger(__name__)
+
+
+async def healthcheck(request):
+    return Response(text="OK")
 
 
 async def setup_bot() -> tuple[Bot, Dispatcher]:
@@ -48,6 +52,8 @@ async def run_webhook():
     SimpleRequestHandler(dp, bot, secret_token=settings.webhook.secret_token).register(
         app, path=settings.webhook.path
     )
+
+    app.router.add_get("/", healthcheck)
 
     setup_application(app, dp, bot=bot)
 
