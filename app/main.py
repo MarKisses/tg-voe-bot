@@ -46,7 +46,7 @@ async def run_webhook():
     app = Application()
 
     SimpleRequestHandler(dp, bot, secret_token=settings.webhook.secret_token).register(
-        app, path=settings.webhook.full_url
+        app, path=settings.webhook.path
     )
 
     setup_application(app, dp, bot=bot)
