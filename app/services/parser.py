@@ -159,4 +159,6 @@ def parse_schedule(
         "disconnections": disconnection_days,
     }
 
-    return ScheduleResponse(**formatted)
+    result = ScheduleResponse(**formatted)
+
+    return result

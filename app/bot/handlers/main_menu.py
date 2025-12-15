@@ -1,14 +1,14 @@
-from aiogram import Router, types
+from aiogram import Router
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters.command import Command
 from aiogram.fsm.context import FSMContext
-from logger import create_logger
-from bot.utils import edit_message_with_fallback
-
+from aiogram.types import Message
+from bot.filters import FromUserRequired
 from bot.keyboards.main_menu import main_menu_keyboard
+from bot.utils import edit_message_with_fallback
+from logger import create_logger
 
 logger = create_logger(__name__)
-
 router = Router(name=__name__)
 
 
@@ -23,8 +23,8 @@ async def show_main(source):
         )
 
 
-@router.message(Command("start"))
-async def start(message: types.Message, state: FSMContext):
+@router.message(Command("start"), FromUserRequired())
+async def start(message: Message, state: FSMContext):
     await state.clear()
     logger.info(f"User {message.from_user.id} initiated start command.")
     await edit_message_with_fallback(

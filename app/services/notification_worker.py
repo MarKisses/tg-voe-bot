@@ -79,6 +79,9 @@ async def _process_for_address(
     city_id, street_id, house_id = map(int, addr_id.split("-"))
 
     raw = await fetch_schedule(city_id, street_id, house_id)
+    if not raw:
+        logger.critical("Can't get info from VOE site")
+        return
 
     address = await user_storage.get_address_by_id(
         subscribers_today[0] if subscribers_today else subscribers_tomorrow[0], addr_id
@@ -87,6 +90,9 @@ async def _process_for_address(
         logger.warning(f"Address {addr_id} not found in user storage")
         return
     schedule = parse_schedule(raw, address.name, max_days=2)
+    if not schedule.disconnections:
+        logger.warning(f"No disconnections for {addr_id} for 2 days")
+        return
 
     changed = await _update_hashes_for_address(addr_id, schedule)
 
@@ -127,24 +133,33 @@ async def _process_for_address(
             )
             logger.info(f"Sent notification to user {uid} for address {addr_id} tomorrow")
 
+sem = asyncio.Semaphore(5)
+
+async def _process_address_safe(bot, addr_id: str):
+    async with sem:
+        subs_today = await subscription_storage.get_subscribers(
+            addr_id, "today"
+        )
+        subs_tomorrow = await subscription_storage.get_subscribers(
+            addr_id, "tomorrow"
+        )
+
+        if not subs_today and not subs_tomorrow:
+            return
+
+        await _process_for_address(bot, addr_id, subs_today, subs_tomorrow)
+        
 
 async def notification_worker(bot: Bot, interval_seconds: int = 900) -> None:
     while True:
         try:
+            tasks = []
             addr_ids = await subscription_storage.get_all_addresses()
 
             for addr_id in addr_ids:
-                subs_today = await subscription_storage.get_subscribers(
-                    addr_id, "today"
-                )
-                subs_tomorrow = await subscription_storage.get_subscribers(
-                    addr_id, "tomorrow"
-                )
-
-                if not subs_today and not subs_tomorrow:
-                    continue
-
-                await _process_for_address(bot, addr_id, subs_today, subs_tomorrow)
+                tasks.append(_process_address_safe(bot, addr_id=addr_id))
+            
+            asyncio.gather(*tasks)
 
         except Exception:
             logger.exception("Notification worker tick failed")

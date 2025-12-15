@@ -1,33 +1,40 @@
 import logging
 import logging.handlers
 import sys
-from pathlib import Path
 
-LOG_DIR = Path("./logs")
-LOG_DIR.mkdir(exist_ok=True)
+COLORS = {
+    logging.DEBUG: "\033[37m",  # серый
+    logging.INFO: "\033[36m",  # голубой
+    logging.WARNING: "\033[33m",  # жёлтый
+    logging.ERROR: "\033[31m",  # красный
+    logging.CRITICAL: "\033[41m",  # красный фон
+}
+RESET = "\033[0m"
 
-LOG_FILE = LOG_DIR / "bot.log"
 
-# ====== FORMAT ======
-formatter = logging.Formatter(
-    fmt="%(asctime)s | %(levelname)-8s | %(name)-20s | %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
+class ColorFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:
+        color = COLORS.get(record.levelno, RESET)
+        record.levelname = f"{color}{record.levelname}{RESET}"
+        record.name = f"{color}{record.name}{RESET}"
+        return super().format(record)
 
-# ====== STDOUT (for Docker logs) ======
-console_handler = logging.StreamHandler(sys.stdout)
-console_handler.setFormatter(formatter)
-console_handler.setLevel(logging.INFO)
 
-# ====== FILE ROTATION (keep last 10 files, 5MB each) ======
-file_handler = logging.handlers.RotatingFileHandler(
-    LOG_FILE, maxBytes=5 * 1024 * 1024, backupCount=10, encoding="utf-8"
-)
-file_handler.setFormatter(formatter)
-file_handler.setLevel(logging.DEBUG)
+def init_logging():
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(logging.INFO)
 
-# ====== ROOT LOGGER ======
-logging.basicConfig(level=logging.DEBUG, handlers=[console_handler, file_handler], force=True)
+    formatter = ColorFormatter(
+        fmt="%(asctime)s | %(levelname)-8s | %(name)-30s | %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    handler.setFormatter(formatter)
+
+    root = logging.getLogger()
+    root.setLevel(logging.DEBUG)
+    root.handlers.clear()
+    root.addHandler(handler)
+
 
 def create_logger(name: str) -> logging.Logger:
     return logging.getLogger(name)

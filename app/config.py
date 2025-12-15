@@ -1,6 +1,7 @@
-from pydantic_settings import SettingsConfigDict, BaseSettings
-from pydantic import computed_field
 from typing import Literal
+
+from pydantic import computed_field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Fetcher(BaseSettings):
@@ -25,6 +26,8 @@ class Fetcher(BaseSettings):
 
 class Flare(BaseSettings):
     url: str = "http://flaresolver:8191/v1"
+    operating_mode: Literal["cookie", "proxy"] = "proxy"
+    session: str = "voe-session"
 
 
 class Notification(BaseSettings):
@@ -37,7 +40,8 @@ class Redis(BaseSettings):
     db: int = 0
     username: str = "default"
     password: str | None = None
-    
+
+
 class Webhook(BaseSettings):
     url: str = "http://googlecloudrun.com"
     path: str = "/webhook"

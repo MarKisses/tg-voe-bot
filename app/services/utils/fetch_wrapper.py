@@ -1,6 +1,6 @@
 import httpx
 from config import settings
-from .flare_solver import solve_challenge
+from .flare_solver import solve_challenge, flare_proxy
 
 from logger import create_logger
 logger = create_logger(__name__)
@@ -28,6 +28,14 @@ async def fetch(
     cookie = settings.fetcher.cookie
 
     cookies = {"cf_clearance": cookie} if cookie else None
+    
+    if settings.flare.operating_mode == "proxy":
+        return await flare_proxy(
+            f"{base_url}{url}",
+            params=params,
+            data=data,
+            method=method,
+        )
 
     async with httpx.AsyncClient(base_url=base_url, timeout=150) as client:
         try:

@@ -8,6 +8,7 @@ from aiogram.utils.chat_action import ChatActionSender
 from services import fetch_schedule, parse_schedule, render_schedule_image
 from services.models import Address, City, House, ScheduleResponse, Street
 from storage import user_storage
+from exceptions import EmptyDisconnectionSchedule
 
 from bot.keyboards.address_list import (
     address_list_keyboard,
@@ -158,6 +159,13 @@ async def select_address_callback(callback: CallbackQuery, state: FSMContext):
     ):
         raw = await fetch_schedule(address.city.id, address.street.id, address.house.id)
         parsed = parse_schedule(raw, address.name, max_days=2)
+
+        if not parsed.disconnections:
+            await callback.message.edit_text(
+                text=f"Графік відключень для {address.name} відсутній.",
+                reply_markup=full_address_keyboard(address_id)
+            )
+            return
 
     await user_storage.set_cached_schedule(address.id, parsed.model_dump())
 
