@@ -133,33 +133,39 @@ async def _process_for_address(
             )
             logger.info(f"Sent notification to user {uid} for address {addr_id} tomorrow")
 
-sem = asyncio.Semaphore(5)
+# sem = asyncio.Semaphore(5)
 
 async def _process_address_safe(bot, addr_id: str):
-    async with sem:
-        subs_today = await subscription_storage.get_subscribers(
-            addr_id, "today"
-        )
-        subs_tomorrow = await subscription_storage.get_subscribers(
-            addr_id, "tomorrow"
-        )
+    # async with sem:
+    subs_today = await subscription_storage.get_subscribers(
+        addr_id, "today"
+    )
+    subs_tomorrow = await subscription_storage.get_subscribers(
+        addr_id, "tomorrow"
+    )
 
-        if not subs_today and not subs_tomorrow:
-            return
+    if not subs_today and not subs_tomorrow:
+        return
 
-        await _process_for_address(bot, addr_id, subs_today, subs_tomorrow)
+    await _process_for_address(bot, addr_id, subs_today, subs_tomorrow)
         
 
 async def notification_worker(bot: Bot, interval_seconds: int = 900) -> None:
     while True:
         try:
-            tasks = []
+            # tasks = []
             addr_ids = await subscription_storage.get_all_addresses()
 
             for addr_id in addr_ids:
-                tasks.append(_process_address_safe(bot, addr_id=addr_id))
+                # Оставлю пока на потом
+                # Слишком много запросов на внейший сервис
+                # Не хочу уходить за лимиты оперативки и крашить
+                # tasks.append(_process_address_safe(bot, addr_id=addr_id))
+                
+                
+                await _process_address_safe(bot, addr_id=addr_id)
             
-            asyncio.gather(*tasks)
+            # asyncio.gather(*tasks)
 
         except Exception:
             logger.exception("Notification worker tick failed")

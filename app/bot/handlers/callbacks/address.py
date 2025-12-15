@@ -153,10 +153,10 @@ async def select_address_callback(callback: CallbackQuery, state: FSMContext):
         )
         return
 
-    await callback.message.edit_text(text="Сасу, пержу, графік палучітб хачю...")
     async with ChatActionSender(
         bot=callback.bot, chat_id=callback.message.chat.id, action=ChatAction.TYPING
     ):
+        await callback.message.edit_text(text="Сасу, пержу, графік палучітб хачю...")
         raw = await fetch_schedule(address.city.id, address.street.id, address.house.id)
         parsed = parse_schedule(raw, address.name, max_days=2)
 
