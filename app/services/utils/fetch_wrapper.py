@@ -1,10 +1,10 @@
 import httpx
 from config import settings
+from asyncio import Semaphore
 from .flare_solver import solve_challenge, flare_proxy
 
 from logger import create_logger
 logger = create_logger(__name__)
-
 
 async def _attempt_request(
     client: httpx.AsyncClient, method, url, headers, params, cookies, data
@@ -19,6 +19,8 @@ async def _attempt_request(
         follow_redirects=True,
     )
 
+# Limit concurrent HTTP requests
+http_sem = Semaphore(3)
 
 async def fetch(
     url: str, params: dict | None = None, data: dict | None = None, method: str = "GET"
@@ -29,43 +31,44 @@ async def fetch(
 
     cookies = {"cf_clearance": cookie} if cookie else None
     
-    if settings.flare.operating_mode == "proxy":
-        return await flare_proxy(
-            f"{base_url}{url}",
-            params=params,
-            data=data,
-            method=method,
-        )
-
-    async with httpx.AsyncClient(base_url=base_url, timeout=150) as client:
-        try:
-            r = await _attempt_request(
-                client, method, url, headers, params, cookies, data
+    async with http_sem:
+        if settings.flare.operating_mode == "proxy":
+            return await flare_proxy(
+                f"{base_url}{url}",
+                params=params,
+                data=data,
+                method=method,
             )
-            r.raise_for_status()
-            return r.json()
 
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code != 403:
-                raise
+        async with httpx.AsyncClient(base_url=base_url, timeout=150) as client:
+            try:
+                r = await _attempt_request(
+                    client, method, url, headers, params, cookies, data
+                )
+                r.raise_for_status()
+                return r.json()
 
-            logger.info("🔥 Cloudflare challenge detected, using FlareSolverr…")
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code != 403:
+                    raise
 
-            full_url = f"{base_url}{url}"
-            solution = await solve_challenge(full_url)
+                logger.info("🔥 Cloudflare challenge detected, using FlareSolverr…")
 
-            for c in solution["cookies"]:
-                if c["name"] == "cf_clearance":
-                    settings.fetcher.cookie = c["value"]
+                full_url = f"{base_url}{url}"
+                solution = await solve_challenge(full_url)
 
-            if solution["user_agent"]:
-                settings.fetcher.user_agent = {"User-Agent": solution["user_agent"]}
+                for c in solution["cookies"]:
+                    if c["name"] == "cf_clearance":
+                        settings.fetcher.cookie = c["value"]
 
-            new_headers = settings.fetcher.headers
-            new_cookies = {"cf_clearance": settings.fetcher.cookie}
+                if solution["user_agent"]:
+                    settings.fetcher.user_agent = {"User-Agent": solution["user_agent"]}
 
-            r2 = await _attempt_request(
-                client, method, url, new_headers, params, new_cookies, data
-            )
-            r2.raise_for_status()
-            return r2.json()
+                new_headers = settings.fetcher.headers
+                new_cookies = {"cf_clearance": settings.fetcher.cookie}
+
+                r2 = await _attempt_request(
+                    client, method, url, new_headers, params, new_cookies, data
+                )
+                r2.raise_for_status()
+                return r2.json()

@@ -1,13 +1,11 @@
 import asyncio
-import os
-from logger import create_logger, init_logging
-init_logging()
 
 from aiogram import Bot, Dispatcher
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
-from aiohttp.web import Application, AppRunner, TCPSite, Response
+from aiohttp.web import Application, AppRunner, Response, TCPSite
 from bot.handlers import register_handlers
 from config import settings
+from logger import create_logger
 from services.notification_worker import notification_worker
 from storage import create_redis_client, create_storage
 from watchfiles import run_process
@@ -66,14 +64,11 @@ async def run_webhook():
 
     logger.info("Starting webhook server...")
 
-    port = int(os.environ.get("PORT", 8000))
-
-    logger.info("Starting aiohttp webhook server on port %s", port)
+    logger.info("Starting aiohttp webhook server on port %s", settings.webhook.port)
 
     runner = AppRunner(app)
     await runner.setup()
-
-    site = TCPSite(runner, host="0.0.0.0", port=port)
+    site = TCPSite(runner, host="0.0.0.0", port=settings.webhook.port)
     await site.start()
 
     await asyncio.Event().wait()
@@ -92,6 +87,6 @@ def run():
 
 if __name__ == "__main__":
     if settings.bot_mode == "polling":
-        run_process("app",target=run)
+        run_process("app", target=run)
     elif settings.bot_mode == "webhook":
         run()

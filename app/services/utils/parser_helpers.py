@@ -21,6 +21,15 @@ def _has_disconnection(classes: List[str]) -> Optional[bool]:
 def _safe_get_classes(el) -> List[str]:
     return el.get("class", []) if el else []
 
+def _get_classes(el) -> list[str]:
+    """
+    Быстрая замена _safe_get_classes для lxml
+    """
+    if el is None:
+        return []
+    cls = el.get("class")
+    return cls.split() if cls else []
+
 
 def _inc_time(hour: int, minute: int, delta_minutes: int) -> Tuple[int, int]:
     total = hour * 60 + minute + delta_minutes
