@@ -51,7 +51,7 @@ def parse_schedule(
 
     for i, _ in enumerate(days_to_parse):
         day_date = (datetime.now() + timedelta(days=i)).date().isoformat()
-        logger.info(f"Parsing schedule for date: {day_date}")
+        logger.info(f"Parsing schedule for {address_name} for date: {day_date}")
 
         day_rows = []
         day_has_disconnections = (

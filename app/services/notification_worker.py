@@ -89,7 +89,7 @@ async def _process_for_address(
         logger.warning(f"Address {addr_id} not found in user storage")
         return
     schedule = parse_schedule(raw, address.name, max_days=2)
-    logger.info(schedule)
+    
     if not schedule.disconnections:
         logger.warning(f"No disconnections for {addr_id} for 2 days")
         return

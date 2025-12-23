@@ -20,18 +20,18 @@ async def _attempt_request(
     )
 
 # Limit concurrent HTTP requests
-http_sem = Semaphore(3)
+http_sem = Semaphore(1)
 
 async def fetch(
     url: str, params: dict | None = None, data: dict | None = None, method: str = "GET"
 ):
-    base_url = settings.fetcher.base_url
-    headers = settings.fetcher.headers
-    cookie = settings.fetcher.cookie
-
-    cookies = {"cf_clearance": cookie} if cookie else None
-    
     async with http_sem:
+        base_url = settings.fetcher.base_url
+        headers = settings.fetcher.headers
+        cookie = settings.fetcher.cookie
+
+        cookies = {"cf_clearance": cookie} if cookie else None
+    
         if settings.flare.operating_mode == "proxy":
             return await flare_proxy(
                 f"{base_url}{url}",
