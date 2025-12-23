@@ -52,6 +52,13 @@ class Webhook(BaseSettings):
     @property
     def full_url(self) -> str:
         return f"{self.url}{self.path}"
+    
+class Messages_Loading(BaseSettings):
+    loading_city: str = "Завантаження міст..."
+    loading_street: str = "Завантаження вулиць..."
+    loading_house: str = "Завантаження будинків..."
+    
+    loading_schedule: str = "Завантаження графіка відключень..."
 
 
 class Settings(BaseSettings):
@@ -70,6 +77,6 @@ class Settings(BaseSettings):
     flare: Flare = Flare()
     notification: Notification = Notification()
     webhook: Webhook = Webhook()
-
+    messages_loading: Messages_Loading = Messages_Loading()
 
 settings = Settings()

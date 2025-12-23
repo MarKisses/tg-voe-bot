@@ -1,6 +1,6 @@
 import logging
 
-from aiogram import Router
+from aiogram import Router, F
 from aiogram.enums import ChatAction
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
@@ -13,14 +13,16 @@ from bot.keyboards.address_list import (
 from bot.states.AddressState import AddressState
 from services.fetcher import fetch_cities, fetch_houses, fetch_streets
 from services.models import City, House, Street
+from config import settings
 
 logger = logging.getLogger(__name__)
 
 router = Router(name=__name__)
 
 
-@router.message(AddressState.choosing_city)
+@router.message(AddressState.choosing_city, F.text)
 async def choose_city_handler(message: Message, state: FSMContext):
+    bot = message.bot
     await message.delete()
     city_name = message.text.strip()
 
@@ -29,10 +31,10 @@ async def choose_city_handler(message: Message, state: FSMContext):
 
     logger.info(f"User {message.from_user.id} is searching for city: {city_name}")
     async with ChatActionSender(
-        bot=message.bot, chat_id=chat_id, action=ChatAction.TYPING
+        bot=bot, chat_id=chat_id, action=ChatAction.TYPING
     ):
         await message.bot.edit_message_text(
-            text="Завантажую інформацію, зачекайте...",
+            text=settings.messages_loading.loading_city,
             chat_id=chat_id,
             message_id=msg_id,
         )
@@ -70,11 +72,12 @@ async def choose_street_handler(message: Message, state: FSMContext):
         )
     chosen_city = City.model_validate(chosen_city_data)
 
+    logger.info(f"User {message.from_user.id} is searching for street: {street_name}")
     async with ChatActionSender(
         bot=message.bot, chat_id=chat_id, action=ChatAction.TYPING
     ):
         await message.bot.edit_message_text(
-            text="Завантажую інформацію, зачекайте...",
+            text=settings.messages_loading.loading_street,
             chat_id=chat_id,
             message_id=msg_id,
         )
@@ -112,11 +115,12 @@ async def choose_house_handler(message: Message, state: FSMContext):
         )
     chosen_street = Street.model_validate(chosen_street_data)
 
+    logger.info(f"User {message.from_user.id} is searching for house: {house_name}")
     async with ChatActionSender(
         bot=message.bot, chat_id=chat_id, action=ChatAction.TYPING
     ):
         await message.bot.edit_message_text(
-            text="Завантажую інформацію, зачекайте...",
+            text=settings.messages_loading.loading_house,
             chat_id=chat_id,
             message_id=msg_id,
         )

@@ -13,6 +13,7 @@ from logger import create_logger
 from services import fetch_schedule, parse_schedule, render_schedule_image
 from services.models import Address, City, House, ScheduleResponse, Street
 from storage import subscription_storage, user_storage
+from config import settings
 
 logger = create_logger(__name__)
 
@@ -153,7 +154,7 @@ async def select_address_callback(callback: CallbackQuery, state: FSMContext):
     async with ChatActionSender(
         bot=callback.bot, chat_id=callback.message.chat.id, action=ChatAction.TYPING
     ):
-        await callback.message.edit_text(text="Сасу, пержу, графік палучітб хачю...")
+        await callback.message.edit_text(text=settings.messages_loading.loading_schedule)
         raw = await fetch_schedule(address.city.id, address.street.id, address.house.id)
         parsed = parse_schedule(raw, address.name, max_days=2)
 
