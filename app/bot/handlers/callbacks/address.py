@@ -34,7 +34,7 @@ async def city_callback(callback: CallbackQuery, state: FSMContext):
         return callback.answer()
     await state.set_state(AddressState.choosing_city)
     await callback.message.edit_text(text="Введіть назву міста")
-    await callback.answer()
+    return await callback.answer()
 
 
 @router.callback_query(lambda c: c.data.startswith("city_select:"))
