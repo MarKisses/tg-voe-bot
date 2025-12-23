@@ -46,4 +46,7 @@ class Address(BaseModel):
     @computed_field
     @property
     def name(self) -> str:
+        match = re.search(r'(.+)\s\(', self.city.name)
+        if match:
+            return f"{match.group(1)}, {self.street.name}, {self.house.name}"
         return f"{self.city.name[:10]}, {self.street.name}, {self.house.name}"

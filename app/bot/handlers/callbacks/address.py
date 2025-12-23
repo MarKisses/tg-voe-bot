@@ -1,23 +1,20 @@
-from logging import getLogger
-
 from aiogram import Router
 from aiogram.enums import ChatAction
 from aiogram.fsm.context import FSMContext
 from aiogram.types import BufferedInputFile, CallbackQuery
 from aiogram.utils.chat_action import ChatActionSender
-from services import fetch_schedule, parse_schedule, render_schedule_image
-from services.models import Address, City, House, ScheduleResponse, Street
-from storage import user_storage
-from exceptions import EmptyDisconnectionSchedule
-
 from bot.keyboards.address_list import (
     address_list_keyboard,
     day_list_keyboard,
     full_address_keyboard,
 )
 from bot.states.AddressState import AddressState
+from logger import create_logger
+from services import fetch_schedule, parse_schedule, render_schedule_image
+from services.models import Address, City, House, ScheduleResponse, Street
+from storage import subscription_storage, user_storage
 
-logger = getLogger(__name__)
+logger = create_logger(__name__)
 
 router = Router(name=__name__)
 
@@ -120,7 +117,7 @@ async def house_select_callback(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(
         text=f"{address.name}", reply_markup=address_list_keyboard([address])
     )
-    
+
     await state.clear()
     await callback.answer()
 
@@ -163,7 +160,7 @@ async def select_address_callback(callback: CallbackQuery, state: FSMContext):
         if not parsed.disconnections:
             await callback.message.edit_text(
                 text=f"Графік відключень для {address.name} відсутній.",
-                reply_markup=full_address_keyboard(address_id)
+                reply_markup=full_address_keyboard(address_id),
             )
             return
 
@@ -220,6 +217,12 @@ async def delete_address_callback(callback: CallbackQuery, state: FSMContext):
         return
 
     await user_storage.remove_address(callback.from_user.id, address_id)
+    await subscription_storage.remove_subscription(
+        callback.from_user.id, address_id, "today"
+    )
+    await subscription_storage.remove_subscription(
+        callback.from_user.id, address_id, "tomorrow"
+    )
 
     addresses = await user_storage.get_addresses(callback.from_user.id)
     if not addresses:

@@ -1,7 +1,6 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-
-from services.models import Address, City, Street, House
+from services.models import Address, City, House, Street
 
 
 def address_list_keyboard(addresses: list[Address] | None) -> InlineKeyboardMarkup:
@@ -29,9 +28,11 @@ def address_list_keyboard(addresses: list[Address] | None) -> InlineKeyboardMark
 def cities_list_keyboard(cities: list[City]) -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     for city in cities:
-        kb.button(
-            text=f"{city.name}",
-            callback_data=f"city_select:{city.id}",
+        kb.row(
+            InlineKeyboardButton(
+                text=f"{city.name}",
+                callback_data=f"city_select:{city.id}",
+            )
         )
     kb.row(InlineKeyboardButton(text="⬅️ Назад", callback_data="back:address_list"))
     return kb.as_markup()
@@ -40,9 +41,11 @@ def cities_list_keyboard(cities: list[City]) -> InlineKeyboardMarkup:
 def streets_list_keyboard(streets: list[Street]) -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     for street in streets:
-        kb.button(
-            text=f"{street.name}",
-            callback_data=f"street_select:{street.id}",
+        kb.row(
+            InlineKeyboardButton(
+                text=f"{street.name}",
+                callback_data=f"street_select:{street.id}",
+            )
         )
     kb.row(InlineKeyboardButton(text="⬅️ Назад", callback_data="back:address_list"))
     return kb.as_markup()
@@ -72,7 +75,11 @@ def full_address_keyboard(addr_id: str) -> InlineKeyboardMarkup:
             callback_data=f"subscriptions:{addr_id}",
         )
     )
-    kb.row(InlineKeyboardButton(text="Видалити адресу ❌", callback_data=f"delete_address:{addr_id}"))
+    kb.row(
+        InlineKeyboardButton(
+            text="Видалити адресу ❌", callback_data=f"delete_address:{addr_id}"
+        )
+    )
     kb.row(InlineKeyboardButton(text="⬅️", callback_data="back:address_list"))
     return kb.as_markup()
 

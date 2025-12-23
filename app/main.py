@@ -5,11 +5,12 @@ from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_applicati
 from aiohttp.web import Application, AppRunner, Response, TCPSite
 from bot.handlers import register_handlers
 from config import settings
-from logger import create_logger
+from logger import create_logger, init_logging
 from services.notification_worker import notification_worker
 from storage import create_redis_client, create_storage
 from watchfiles import run_process
 
+init_logging()
 logger = create_logger(__name__)
 
 
