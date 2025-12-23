@@ -17,12 +17,12 @@ async def solve_challenge(target_url: str):
     payload = {
         "cmd": "request.get",
         "url": target_url,
-        "maxTimeout": 120000,
+        "maxTimeout": 150000,
         "returnOnlyCookies": True,
         "disableMedia": True,
     }
 
-    async with httpx.AsyncClient(timeout=120) as client:
+    async with httpx.AsyncClient(timeout=150) as client:
         r = await client.post(FLARE_URL, json=payload, headers=headers)
         r.raise_for_status()
         res = r.json()
@@ -52,13 +52,13 @@ async def flare_proxy(
         "cmd": f"request.{method.lower()}",
         "url": target_url,
         "session": settings.flare.session,
-        "maxTimeout": 120000,
+        "maxTimeout": 150000,
     }
 
     if method.lower() != "get" and data:
         payload["postData"] = urlencode(data)
 
-    async with httpx.AsyncClient(timeout=120) as client:
+    async with httpx.AsyncClient(timeout=150) as client:
         r = await client.post(FLARE_URL, json=payload, headers=headers)
         r.raise_for_status()
         res = r.json()
