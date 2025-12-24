@@ -113,7 +113,7 @@ async def _process_for_address(
             await bot.send_photo(
                 uid, photo=buffered_file, reply_markup=main_menu_keyboard()
             )
-            logger.info(f"Sent notification to user {uid} for address {addr_id} today")
+            logger.info(f"Sent notification to user {uid} for address {addr_id} today ({schedule.address})")
 
     if "tomorrow" in changed:
         msg = f"📅 З'явився/оновився графік на завтра за адресою {address.name}."
@@ -132,7 +132,7 @@ async def _process_for_address(
                 uid, photo=buffered_file, reply_markup=main_menu_keyboard()
             )
             logger.info(
-                f"Sent notification to user {uid} for address {addr_id} tomorrow"
+                f"Sent notification to user {uid} for address {addr_id} tomorrow ({schedule.address})"
             )
 
 
