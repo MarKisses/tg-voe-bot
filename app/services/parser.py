@@ -46,13 +46,14 @@ def parse_schedule(
     #     )[1:25]
     # ]
 
-    hours = [f"{h:02d}:00" for h in range(25)]
+    hours = [f"{h:02d}:00" for h in range(24)]
 
     # дни (макс 7)
     day_names = [
         d.strip()
         for d in tree.xpath(
-            "//div[contains(concat(' ', normalize-space(@class), ' '), ' disconnection-detailed-table-cell ') "
+            "(//div[contains(@class, 'disconnection-detailed-table-container')])[1]"
+            "/div[contains(concat(' ', normalize-space(@class), ' '), ' disconnection-detailed-table-cell ') "
             "and contains(concat(' ', normalize-space(@class), ' '), ' legend ') "
             "and contains(concat(' ', normalize-space(@class), ' '), ' day_col ')]"
             "/text()"
@@ -61,7 +62,8 @@ def parse_schedule(
 
     # все ячейки сразу
     cells = tree.xpath(
-        "//div[contains(concat(' ', normalize-space(@class), ' '), ' disconnection-detailed-table-cell ') "
+        "(//div[contains(@class, 'disconnection-detailed-table-container')])[1]"
+        "/div[contains(concat(' ', normalize-space(@class), ' '), ' disconnection-detailed-table-cell ') "
         "and contains(concat(' ', normalize-space(@class), ' '), ' cell ')]"
     )
 
