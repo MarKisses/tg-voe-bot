@@ -22,8 +22,9 @@ def create_storage(redis: Redis):
 
 _redis = create_redis_client()
 
+fsm_storage = create_storage(_redis)
 user_storage = UserStorage(_redis)
 subscription_storage = SubscriptionStorage(_redis)
 
 
-__all__ = ["create_redis_client", "create_storage", "user_storage", "subscription_storage"]
+__all__ = ["create_redis_client", "create_storage", "user_storage", "subscription_storage", "fsm_storage"]

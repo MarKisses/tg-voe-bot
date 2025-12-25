@@ -1,0 +1,18 @@
+[
+  {
+    "value": "м.. Вінниця (Вінницька Область/М.Вінниця)",
+    "label": "<div class=\"change_api_autocomplit\" data-method=\"read_city\" data-id=\"510100000\">м.. Вінниця (Вінницька Область/М.Вінниця)</div>"
+  },
+  {
+    "value": "с.. Вінниківці (Літинський Район/Смт Літин)",
+    "label": "<div class=\"change_api_autocomplit\" data-method=\"read_city\" data-id=\"522481603\">с.. Вінниківці (Літинський Район/Смт Літин)</div>"
+  },
+  {
+    "value": "с.. Вінницькі Хутори (Вінницький Район/М.Вінниця)",
+    "label": "<div class=\"change_api_autocomplit\" data-method=\"read_city\" data-id=\"520681003\">с.. Вінницькі Хутори (Вінницький Район/М.Вінниця)</div>"
+  },
+  {
+    "value": "с.. Вінож (Мурованокуриловецький Район/Смт Муровані Курилівці)",
+    "label": "<div class=\"change_api_autocomplit\" data-method=\"read_city\" data-id=\"522884602\">с.. Вінож (Мурованокуриловецький Район/Смт Муровані Курилівці)</div>"
+  }
+]

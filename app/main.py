@@ -7,7 +7,7 @@ from bot.handlers import register_handlers
 from config import settings
 from logger import create_logger, init_logging
 from services.notification_worker import notification_worker
-from storage import create_redis_client, create_storage
+from storage import fsm_storage
 from watchfiles import run_process
 
 init_logging()
@@ -19,19 +19,18 @@ async def healthcheck(request):
 
 
 async def setup_bot() -> tuple[Bot, Dispatcher]:
-    redis = create_redis_client()
-    storage = create_storage(redis)
-
     if not settings.bot_token:
         logger.error("Bot token is not set. Please set BOT_TOKEN environment variable.")
         raise ValueError("BOT_TOKEN is required")
 
     bot = Bot(token=settings.bot_token)
-    dp = Dispatcher(storage=storage)
+    dp = Dispatcher(storage=fsm_storage)
 
     logger.info("Starting bot...")
     register_handlers(dp)
-    asyncio.create_task(notification_worker(bot, interval_seconds=900))
+    asyncio.create_task(
+        notification_worker(bot, interval_seconds=settings.notification.interval)
+    )
 
     return bot, dp
 

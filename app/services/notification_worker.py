@@ -1,19 +1,20 @@
 import asyncio
-from logging import getLogger
 from typing import Literal
 
 from aiogram import Bot
 from aiogram.types.input_file import BufferedInputFile
 from bot.keyboards.main_menu import main_menu_keyboard
+from logger import create_logger
 from services.fetcher import fetch_schedule
 from services.models import ScheduleResponse
 from services.parser import parse_schedule
 from services.renderer import render_schedule_image
 from storage import subscription_storage, user_storage
+from bot.utils import show_service_menu, replace_service_menu
 
 SubscriptionKinds = Literal["today", "tomorrow"]
 
-logger = getLogger(__name__)
+logger = create_logger(__name__)
 
 
 def _calc_hash(obj: dict) -> str:
@@ -89,7 +90,7 @@ async def _process_for_address(
         logger.warning(f"Address {addr_id} not found in user storage")
         return
     schedule = parse_schedule(raw, address.name, max_days=2)
-    
+
     if not schedule.disconnections:
         logger.warning(f"No disconnections for {addr_id} for 2 days")
         return
@@ -109,11 +110,19 @@ async def _process_for_address(
             filename="schedule.png",
         )
         for uid in subscribers_today:
-            await bot.send_message(uid, msg)
+            # await bot.send_message(uid, msg)
             await bot.send_photo(
-                uid, photo=buffered_file, reply_markup=main_menu_keyboard()
+                uid, photo=buffered_file, caption=msg, show_caption_above_media=True
             )
-            logger.info(f"Sent notification to user {uid} for address {addr_id} today ({schedule.address})")
+            await replace_service_menu(
+                bot=bot,
+                chat_id=uid,
+                text="Головне меню",
+                reply_markup=main_menu_keyboard(),
+            )
+            logger.info(
+                f"Sent notification to user {uid} for address {addr_id} today ({schedule.address})"
+            )
 
     if "tomorrow" in changed:
         msg = f"📅 З'явився/оновився графік на завтра за адресою {address.name}."
@@ -127,15 +136,18 @@ async def _process_for_address(
             filename="schedule.png",
         )
         for uid in subscribers_tomorrow:
-            await bot.send_message(uid, msg)
             await bot.send_photo(
-                uid, photo=buffered_file, reply_markup=main_menu_keyboard()
+                uid, photo=buffered_file, caption=msg, show_caption_above_media=True
+            )
+            await replace_service_menu(
+                bot=bot,
+                chat_id=uid,
+                text="Головне меню",
+                reply_markup=main_menu_keyboard(),
             )
             logger.info(
                 f"Sent notification to user {uid} for address {addr_id} tomorrow ({schedule.address})"
             )
-
-
 
 
 async def _process_address_safe(bot, addr_id: str):

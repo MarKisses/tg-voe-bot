@@ -1,0 +1,70 @@
+[
+  {
+    "value": "вулиця Івана Миколайчука",
+    "label": "<div class=\"change_api_autocomplit\" data-method=\"read_street\" data-id=\"1714\">вулиця Івана Миколайчука</div>"
+  },
+  {
+    "value": "вулиця Миколаївська",
+    "label": "<div class=\"change_api_autocomplit\" data-method=\"read_street\" data-id=\"18657\">вулиця Миколаївська</div>"
+  },
+  {
+    "value": "вулиця Миколи Амосова",
+    "label": "<div class=\"change_api_autocomplit\" data-method=\"read_street\" data-id=\"1444\">вулиця Миколи Амосова</div>"
+  },
+  {
+    "value": "вулиця Миколи Битинського",
+    "label": "<div class=\"change_api_autocomplit\" data-method=\"read_street\" data-id=\"1705\">вулиця Миколи Битинського</div>"
+  },
+  {
+    "value": "вулиця Миколи Ващука",
+    "label": "<div class=\"change_api_autocomplit\" data-method=\"read_street\" data-id=\"1327\">вулиця Миколи Ващука</div>"
+  },
+  {
+    "value": "вулиця Миколи Зерова",
+    "label": "<div class=\"change_api_autocomplit\" data-method=\"read_street\" data-id=\"1522\">вулиця Миколи Зерова</div>"
+  },
+  {
+    "value": "вулиця Миколи Костомарова",
+    "label": "<div class=\"change_api_autocomplit\" data-method=\"read_street\" data-id=\"1414\">вулиця Миколи Костомарова</div>"
+  },
+  {
+    "value": "вулиця Миколи Куліша",
+    "label": "<div class=\"change_api_autocomplit\" data-method=\"read_street\" data-id=\"32752\">вулиця Миколи Куліша</div>"
+  },
+  {
+    "value": "вулиця Миколи Оводова",
+    "label": "<div class=\"change_api_autocomplit\" data-method=\"read_street\" data-id=\"1346\">вулиця Миколи Оводова</div>"
+  },
+  {
+    "value": "вулиця Миколи Хвильового",
+    "label": "<div class=\"change_api_autocomplit\" data-method=\"read_street\" data-id=\"1125\">вулиця Миколи Хвильового</div>"
+  },
+  {
+    "value": "вулиця Сад Товариство Химик",
+    "label": "<div class=\"change_api_autocomplit\" data-method=\"read_street\" data-id=\"1632\">вулиця Сад Товариство Химик</div>"
+  },
+  {
+    "value": "провулок 1-й Миколи Костомарова",
+    "label": "<div class=\"change_api_autocomplit\" data-method=\"read_street\" data-id=\"875\">провулок 1-й Миколи Костомарова</div>"
+  },
+  {
+    "value": "провулок 1-й Миколи Хвильового",
+    "label": "<div class=\"change_api_autocomplit\" data-method=\"read_street\" data-id=\"833\">провулок 1-й Миколи Хвильового</div>"
+  },
+  {
+    "value": "провулок 2-й Миколи Костомарова",
+    "label": "<div class=\"change_api_autocomplit\" data-method=\"read_street\" data-id=\"972\">провулок 2-й Миколи Костомарова</div>"
+  },
+  {
+    "value": "провулок 2-й Миколи Хвильового",
+    "label": "<div class=\"change_api_autocomplit\" data-method=\"read_street\" data-id=\"941\">провулок 2-й Миколи Хвильового</div>"
+  },
+  {
+    "value": "провулок Івана Миколайчука",
+    "label": "<div class=\"change_api_autocomplit\" data-method=\"read_street\" data-id=\"1715\">провулок Івана Миколайчука</div>"
+  },
+  {
+    "value": "провулок Миколи Амосова",
+    "label": "<div class=\"change_api_autocomplit\" data-method=\"read_street\" data-id=\"1747\">провулок Миколи Амосова</div>"
+  }
+]

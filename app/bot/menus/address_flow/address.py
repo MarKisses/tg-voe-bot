@@ -3,18 +3,27 @@ from aiogram.fsm.context import FSMContext
 from bot.states.AddressState import AddressState
 from bot.keyboards.city_choose import choose_city_keyboard
 from services import fetch_schedule
+from bot.utils import show_service_menu
 
 
 async def ask_city(source: CallbackQuery, state: FSMContext):
-    await source.message.edit_text(
-        text="Введіть назву міста", reply_markup=choose_city_keyboard()
+    # await source.message.edit_text(
+    #     text="Введіть назву міста", reply_markup=choose_city_keyboard()
+    # )
+    return await show_service_menu(
+        bot=source.bot,
+        chat_id=source.message.chat.id,
+        text="Введіть назву міста",
+        reply_markup=choose_city_keyboard(),
+        old_msg_id=source.message.message_id,
     )
 
 async def ask_street(source: CallbackQuery, state: FSMContext):
     await state.set_state(AddressState.choosing_street)
-    await source.message.edit_text(
-        text="Введіть назву вулиці"
-    )
     
-async def schedule_info(source: CallbackQuery, state: FSMContext):
-    ...
+    return await show_service_menu(
+        bot=source.bot,
+        chat_id=source.message.chat.id,
+        text="Введіть назву вулиці",
+        old_msg_id=source.message.message_id,
+    )

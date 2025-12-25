@@ -3,7 +3,6 @@ import json
 from typing import Optional
 
 from redis.asyncio import Redis
-
 from services.models import Address
 
 
@@ -13,6 +12,24 @@ class UserStorage:
 
     def _key(self, user_id: int) -> str:
         return f"user:{user_id}:addresses"
+
+    def _service_msg(self, chat_id: int) -> str:
+        return f"service_msg:{chat_id}"
+
+    async def clear_service_msg(self, chat_id: int) -> None:
+        key = self._service_msg(chat_id)
+        await self.r.delete(key)
+
+    async def set_service_msg(self, chat_id: int, msg_id: int) -> None:
+        key = self._service_msg(chat_id)
+        await self.r.set(key, msg_id)
+
+    async def get_service_msg(self, chat_id: int) -> Optional[int]:
+        key = self._service_msg(chat_id)
+        raw = await self.r.get(key)
+        if not raw:
+            return None
+        return int(raw)
 
     async def get_addresses(self, user_id: int) -> list[Address]:
         key = self._key(user_id)
@@ -84,7 +101,7 @@ class UserStorage:
 
     async def set_cached_schedule(self, addr_id: str, data: dict, ttl=3600):
         await self.r.set(f"schedule:{addr_id}", json.dumps(data), ex=ttl)
-        
+
     async def get_cached_schedule(self, addr_id: str) -> dict | None:
         raw = await self.r.get(f"schedule:{addr_id}")
         if not raw:

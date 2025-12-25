@@ -18,6 +18,7 @@ async def solve_challenge(target_url: str):
         "cmd": "request.get",
         "url": target_url,
         "maxTimeout": 150000,
+        "session": settings.flare.session,
         "returnOnlyCookies": True,
         "disableMedia": True,
     }

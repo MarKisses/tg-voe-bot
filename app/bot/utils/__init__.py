@@ -1,3 +1,11 @@
-from .message_editor import edit_message_with_fallback
+from .message_editor import (
+    replace_service_menu,
+    send_new_service_menu,
+    show_service_menu,
+)
 
-__all__ = ["edit_message_with_fallback"]
+__all__ = [
+    "replace_service_menu",
+    "show_service_menu",
+    "send_new_service_menu",
+]

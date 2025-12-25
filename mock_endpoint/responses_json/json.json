@@ -1,0 +1,252 @@
+[
+  {
+    "command": "settings",
+    "settings": {
+      "pluralDelimiter": "\u0003",
+      "suppressDeprecationErrors": true,
+      "ajaxPageState": {
+        "libraries": "eJxtyUEOgCAMBdELETgSIbUaDFD4tAtur8Stq0nmkYDDAeup-GQqJLUXVna0ITdltJfuYYzlT0F1ZFOlhi9u6iq5XXFTZEAww897AHJdKdA",
+        "theme": "personal",
+        "theme_token": null
+      },
+      "ajaxTrustedUrl": {
+        "form_action_p_pvdeGsVG5zNF_XLGPTvYSKCf43t8qZYSwcfZl2uzM": true,
+        "/disconnection/detailed?search_type=0&city_id=510100000&street_id=1444&house_id=32599&ajax_form=1": true
+      },
+      "ajax": {
+        "edit-refresh": {
+          "callback": [{}, "buildFormAjax"],
+          "wrapper": "disconnection_detailed_search_form_wrapper",
+          "event": "click",
+          "url": "/disconnection/detailed?search_type=0&city_id=510100000&street_id=1444&house_id=32599&ajax_form=1",
+          "httpMethod": "POST",
+          "dialogType": "ajax",
+          "submit": {
+            "_triggering_element_name": "refresh",
+            "_triggering_element_value": "Refresh"
+          }
+        },
+        "edit-submit": {
+          "callback": [{}, "buildFormAjax"],
+          "wrapper": "disconnection_detailed_search_form_wrapper",
+          "event": "click",
+          "url": "/disconnection/detailed?search_type=0&city_id=510100000&street_id=1444&house_id=32599&ajax_form=1",
+          "httpMethod": "POST",
+          "dialogType": "ajax",
+          "submit": {
+            "_triggering_element_name": "search",
+            "_triggering_element_value": "Показати"
+          }
+        },
+        "edit-search-type-2": {
+          "callback": [{}, "buildFormAjax"],
+          "wrapper": "disconnection_detailed_search_form_wrapper",
+          "event": "change",
+          "url": "/disconnection/detailed?search_type=0&city_id=510100000&street_id=1444&house_id=32599&ajax_form=1",
+          "httpMethod": "POST",
+          "dialogType": "ajax",
+          "submit": {
+            "_triggering_element_name": "search_type"
+          }
+        },
+        "edit-search-type-1": {
+          "callback": [{}, "buildFormAjax"],
+          "wrapper": "disconnection_detailed_search_form_wrapper",
+          "event": "change",
+          "url": "/disconnection/detailed?search_type=0&city_id=510100000&street_id=1444&house_id=32599&ajax_form=1",
+          "httpMethod": "POST",
+          "dialogType": "ajax",
+          "submit": {
+            "_triggering_element_name": "search_type"
+          }
+        },
+        "edit-search-type-0": {
+          "callback": [{}, "buildFormAjax"],
+          "wrapper": "disconnection_detailed_search_form_wrapper",
+          "event": "change",
+          "url": "/disconnection/detailed?search_type=0&city_id=510100000&street_id=1444&house_id=32599&ajax_form=1",
+          "httpMethod": "POST",
+          "dialogType": "ajax",
+          "submit": {
+            "_triggering_element_name": "search_type"
+          }
+        }
+      },
+      "user": {
+        "uid": 0,
+        "permissionsHash": "8c7eb8e7b71811e935c8afe72e90c2945f7e1cd39b55ae70fb8d0169dea3c33f"
+      }
+    },
+    "merge": true
+  },
+  {
+    "command": "add_css",
+    "data": [
+      {
+        "rel": "stylesheet",
+        "media": "all",
+        "href": "/modules/glyanec/styling_form_errors/libs/tooltipster/css/tooltipster.bundle.min.css?t7rm9l"
+      },
+      {
+        "rel": "stylesheet",
+        "media": "all",
+        "href": "/modules/glyanec/styling_form_errors/misc/css/styling_form_errors.css?t7rm9l"
+      },
+      {
+        "rel": "stylesheet",
+        "media": "all",
+        "href": "/core/assets/vendor/jquery.ui/themes/base/core.css?t7rm9l"
+      },
+      {
+        "rel": "stylesheet",
+        "media": "all",
+        "href": "/core/assets/vendor/jquery.ui/themes/base/autocomplete.css?t7rm9l"
+      },
+      {
+        "rel": "stylesheet",
+        "media": "all",
+        "href": "/core/assets/vendor/jquery.ui/themes/base/menu.css?t7rm9l"
+      },
+      {
+        "rel": "stylesheet",
+        "media": "all",
+        "href": "/themes/contrib/stable/css/core/components/progress.module.css?t7rm9l"
+      },
+      {
+        "rel": "stylesheet",
+        "media": "all",
+        "href": "/themes/contrib/stable/css/core/components/ajax-progress.module.css?t7rm9l"
+      },
+      {
+        "rel": "stylesheet",
+        "media": "all",
+        "href": "/themes/contrib/stable/css/core/components/autocomplete-loading.module.css?t7rm9l"
+      },
+      {
+        "rel": "stylesheet",
+        "media": "all",
+        "href": "/themes/contrib/classy/css/components/progress.css?t7rm9l"
+      },
+      {
+        "rel": "stylesheet",
+        "media": "all",
+        "href": "/core/assets/vendor/jquery.ui/themes/base/theme.css?t7rm9l"
+      }
+    ]
+  },
+  {
+    "command": "add_js",
+    "selector": "body",
+    "data": [
+      {
+        "src": "/core/assets/vendor/jquery/jquery.min.js?v=t7rm9l"
+      },
+      {
+        "src": "/core/assets/vendor/once/once.min.js?v=t7rm9l"
+      },
+      {
+        "src": "/sites/default/files/languages/uk_Tw_wwkF0ui1b5dbwcF5u9srYe3saoo-48xN0zDG5V7A.js?v=t7rm9l"
+      },
+      {
+        "src": "/core/misc/drupalSettingsLoader.js?v=t7rm9l"
+      },
+      {
+        "src": "/core/misc/drupal.js?v=t7rm9l"
+      },
+      {
+        "src": "/core/misc/drupal.init.js?v=t7rm9l"
+      },
+      {
+        "src": "/core/assets/vendor/jquery.ui/ui/version-min.js?v=t7rm9l"
+      },
+      {
+        "src": "/core/assets/vendor/jquery.ui/ui/data-min.js?v=t7rm9l"
+      },
+      {
+        "src": "/core/assets/vendor/jquery.ui/ui/disable-selection-min.js?v=t7rm9l"
+      },
+      {
+        "src": "/core/assets/vendor/jquery.ui/ui/jquery-patch-min.js?v=t7rm9l"
+      },
+      {
+        "src": "/core/assets/vendor/jquery.ui/ui/scroll-parent-min.js?v=t7rm9l"
+      },
+      {
+        "src": "/core/assets/vendor/jquery.ui/ui/unique-id-min.js?v=t7rm9l"
+      },
+      {
+        "src": "/core/assets/vendor/jquery.ui/ui/focusable-min.js?v=t7rm9l"
+      },
+      {
+        "src": "/core/assets/vendor/jquery.ui/ui/keycode-min.js?v=t7rm9l"
+      },
+      {
+        "src": "/core/assets/vendor/jquery.ui/ui/plugin-min.js?v=t7rm9l"
+      },
+      {
+        "src": "/core/assets/vendor/jquery.ui/ui/widget-min.js?v=t7rm9l"
+      },
+      {
+        "src": "/core/assets/vendor/jquery.ui/ui/labels-min.js?v=t7rm9l"
+      },
+      {
+        "src": "/core/assets/vendor/jquery.ui/ui/widgets/autocomplete-min.js?v=t7rm9l"
+      },
+      {
+        "src": "/core/assets/vendor/jquery.ui/ui/widgets/menu-min.js?v=t7rm9l"
+      },
+      {
+        "src": "/core/assets/vendor/tabbable/index.umd.min.js?v=t7rm9l"
+      },
+      {
+        "src": "/core/misc/autocomplete.js?v=t7rm9l"
+      },
+      {
+        "src": "/core/misc/progress.js?v=t7rm9l"
+      },
+      {
+        "src": "/core/assets/vendor/loadjs/loadjs.min.js?v=t7rm9l"
+      },
+      {
+        "src": "/core/misc/debounce.js?v=t7rm9l"
+      },
+      {
+        "src": "/core/misc/announce.js?v=t7rm9l"
+      },
+      {
+        "src": "/core/misc/message.js?v=t7rm9l"
+      },
+      {
+        "src": "/core/misc/ajax.js?v=t7rm9l"
+      },
+      {
+        "src": "/themes/contrib/stable/js/ajax.js?v=t7rm9l"
+      },
+      {
+        "src": "/core/misc/jquery.tabbable.shim.js?v=t7rm9l"
+      },
+      {
+        "src": "/core/misc/position.js?v=t7rm9l"
+      },
+      {
+        "src": "/core/misc/jquery.form.js?v=t7rm9l"
+      },
+      {
+        "src": "/modules/glyanec/custom/js/custom.js?v=t7rm9l"
+      },
+      {
+        "src": "/modules/glyanec/styling_form_errors/libs/tooltipster/js/tooltipster.bundle.min.js?v=t7rm9l"
+      },
+      {
+        "src": "/modules/glyanec/styling_form_errors/misc/js/styling_form_errors.js?v=t7rm9l"
+      }
+    ]
+  },
+  {
+    "command": "insert",
+    "method": null,
+    "selector": null,
+    "data": "<div id=\"disconnection_detailed_search_form_wrapper\"><form class=\"disconnection-detailed-search-form form\" autocomplete=\"off\" autocorrect=\"off\" data-drupal-selector=\"disconnection-detailed-search-form\" action=\"/disconnection/detailed/?search_type=0&amp;city_id=510100000&amp;street_id=1444&amp;house_id=32599\" method=\"post\" id=\"disconnection-detailed-search-form\" accept-charset=\"UTF-8\">\n    <div data-drupal-selector=\"edit-search-type\" id=\"edit-search-type--wrapper\" class=\"fieldgroup form-composite form-item form__item form__wrapper form__radios form__item--fieldset form__item--fieldset--search-type\">\n        <div class=\"form__radios--wrapper\">\n                  <div id=\"edit-search-type\" class=\"form__radios-group form-radios--search-type\"><div class=\"form-item form__item form__item--radio form__item--search-type form__item--radio--0\">\n                  <input data-drupal-selector=\"edit-search-type-0\" type=\"radio\" id=\"edit-search-type-0\" name=\"search_type\" value=\"0\" checked=\"checked\" class=\"form-radio form__radio\" />\n\n        <label for=\"edit-search-type-0\" class=\"form__option\">\n    Пошук по адресі\n      </label>\n          <div class=\"form__description\">\n      *Юридичним споживачам пошук проводити по EIC коду або особовому рахунку\n    </div>\n  </div><div class=\"form-item form__item form__item--radio form__item--search-type form__item--radio--1\">\n                  <input data-drupal-selector=\"edit-search-type-1\" type=\"radio\" id=\"edit-search-type-1\" name=\"search_type\" value=\"1\" class=\"form-radio form__radio\" />\n\n        <label for=\"edit-search-type-1\" class=\"form__option\">\n    Пошук по ЕІС коду\n      </label>\n          <div class=\"form__description\">\n      *Для побутових та юридичних споживачів\n    </div>\n  </div><div class=\"form-item form__item form__item--radio form__item--search-type form__item--radio--2\">\n                  <input data-drupal-selector=\"edit-search-type-2\" type=\"radio\" id=\"edit-search-type-2\" name=\"search_type\" value=\"2\" class=\"form-radio form__radio\" />\n\n        <label for=\"edit-search-type-2\" class=\"form__option\">\n    Пошук по особовому рахунку\n      </label>\n          <div class=\"form__description\">\n      *Для побутових та юридичних споживачів\n    </div>\n  </div></div>\n                </div>\n  </div>\n<div class=\"fields_wrapper\"><div class=\"form-item form__item form__item--textfield form__item--city form__item--no-label\">\n      <label for=\"edit-city\" class=\"form__label visually-hidden\">\n    Місто\n      </label>\n                  <input autocomplete=\"off\" placeholder=\"Місто\" data-drupal-selector=\"edit-city\" class=\"form-autocomplete form-text form__textfield\" data-autocomplete-path=\"/disconnection/detailed/autocomplete/read_city\" type=\"text\" id=\"edit-city\" name=\"city\" value=\"\" size=\"60\" maxlength=\"128\" />\n\n      <span class=\"form__field-suffix\"><span class=\"clean js-clean\"></span>\n</span>\n        </div>    <input data-drupal-selector=\"edit-city-id\" type=\"hidden\" name=\"city_id\" value=\"510100000\" />\n<div class=\"form-item form__item form__item--textfield form__item--street form__item--no-label\">\n      <label for=\"edit-street\" class=\"form__label visually-hidden\">\n    Вулиця\n      </label>\n                  <input autocomplete=\"off\" placeholder=\"Вулиця\" data-drupal-selector=\"edit-street\" class=\"form-autocomplete form-text form__textfield\" data-autocomplete-path=\"/disconnection/detailed/autocomplete/read_street/510100000\" type=\"text\" id=\"edit-street\" name=\"street\" value=\"\" size=\"60\" maxlength=\"128\" />\n\n      <span class=\"form__field-suffix\"><span class=\"clean js-clean\"></span>\n</span>\n        </div>    <input data-drupal-selector=\"edit-street-id\" type=\"hidden\" name=\"street_id\" value=\"1444\" />\n<div class=\"form-item form__item form__item--textfield form__item--house form__item--no-label\">\n      <label for=\"edit-house\" class=\"form__label visually-hidden\">\n    Будинок\n      </label>\n                  <input autocomplete=\"off\" placeholder=\"Будинок\" data-drupal-selector=\"edit-house\" class=\"form-autocomplete form-text form__textfield\" data-autocomplete-path=\"/disconnection/detailed/autocomplete/read_house/1444\" type=\"text\" id=\"edit-house\" name=\"house\" value=\"\" size=\"60\" maxlength=\"128\" />\n\n      <span class=\"form__field-suffix\"><span class=\"clean js-clean\"></span>\n</span>\n        </div>    <input data-drupal-selector=\"edit-house-id\" type=\"hidden\" name=\"house_id\" value=\"32599\" />\n  <div data-drupal-selector=\"edit-actions\" class=\"form-actions form__wrapper edit-actions form__actions\">    <button style=\"display: none;\" data-drupal-selector=\"edit-submit\" type=\"submit\" id=\"edit-submit\" name=\"search\" value=\"Показати\" class=\"button js-form-submit form-submit form__submit\">\n        Показати\n    </button>\n    <button style=\"display: none;\" data-drupal-selector=\"edit-refresh\" type=\"submit\" id=\"edit-refresh\" name=\"refresh\" value=\"Refresh\" class=\"button js-form-submit form-submit form__submit\">\n        Refresh\n    </button>\n</div></div><div class=\"table_wrapper\">\t<div  class=\"disconnection-detailed-table\">\n\t\t\t\t\t\t\t<p>1.1 черга</p>\n\t\t\t\t\n\t\t<div class=\"disconnection-detailed-table-container\">\n\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell legend\"></div>\n\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell head grey\">00:00</div>\n\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell head\">01:00</div>\n\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell head grey\">02:00</div>\n\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell head\">03:00</div>\n\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell head grey\">04:00</div>\n\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell head\">05:00</div>\n\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell head grey\">06:00</div>\n\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell head\">07:00</div>\n\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell head grey\">08:00</div>\n\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell head\">09:00</div>\n\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell head grey\">10:00</div>\n\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell head\">11:00</div>\n\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell head grey\">12:00</div>\n\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell head\">13:00</div>\n\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell head grey\">14:00</div>\n\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell head\">15:00</div>\n\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell head grey\">16:00</div>\n\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell head\">17:00</div>\n\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell head grey\">18:00</div>\n\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell head\">19:00</div>\n\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell head grey\">20:00</div>\n\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell head\">21:00</div>\n\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell head grey\">22:00</div>\n\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell head\">23:00</div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell legend  grey day_col current_day\">чт 25.12</div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection current_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection current_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  has_disconnection confirm_1 current_day\"><div class=\"disconnection disconnection_confirm_1\" title=\"Номер черги: 1.1\">1.1</div></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  has_disconnection confirm_1 current_day\"><div class=\"disconnection disconnection_confirm_1\" title=\"Номер черги: 1.1\">1.1</div></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection current_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection current_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection current_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection current_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  has_disconnection confirm_1 current_day\"><div class=\"disconnection disconnection_confirm_1\" title=\"Номер черги: 1.1\">1.1</div></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  has_disconnection confirm_1 current_day\"><div class=\"disconnection disconnection_confirm_1\" title=\"Номер черги: 1.1\">1.1</div></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection current_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection current_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection current_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection current_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  has_disconnection confirm_0 current_day\"><div class=\"disconnection disconnection_confirm_0\" title=\"Номер черги: 1.1\">1.1</div></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  has_disconnection confirm_0 current_day\"><div class=\"disconnection disconnection_confirm_0\" title=\"Номер черги: 1.1\">1.1</div></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection current_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection current_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  has_disconnection confirm_0 current_day\"><div class=\"disconnection disconnection_confirm_0\" title=\"Номер черги: 1.1\">1.1</div></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  has_disconnection confirm_0 current_day\"><div class=\"disconnection disconnection_confirm_0\" title=\"Номер черги: 1.1\">1.1</div></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  has_disconnection confirm_0 current_day\"><div class=\"disconnection disconnection_confirm_0\" title=\"Номер черги: 1.1\">1.1</div></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  has_disconnection confirm_0 current_day\"><div class=\"disconnection disconnection_confirm_0\" title=\"Номер черги: 1.1\">1.1</div></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection current_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection current_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell legend  day_col other_day\">пт 26.12</div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell legend  grey day_col other_day\">сб 27.12</div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell legend  day_col other_day\">нд 28.12</div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell legend  grey day_col other_day\">пн 29.12</div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell legend  day_col other_day\">вт 30.12</div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell legend  grey day_col other_day\">ср 31.12</div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"disconnection-detailed-table-cell cell  no_disconnection other_day\"></div>\n\t\t\t\t\t\t\t\t\t</div>\n\t</div>\n</div>    <input autocomplete=\"off\" data-drupal-selector=\"form-v22ipyfacvdxsuvli98aow6ytanbhgoae5rvfigxivu\" type=\"hidden\" name=\"form_build_id\" value=\"form-V22iPyFaCVDxsUvLI98aoW6YtanbHgOae5rVfIGXivU\" />\n    <input data-drupal-selector=\"edit-disconnection-detailed-search-form\" type=\"hidden\" name=\"form_id\" value=\"disconnection_detailed_search_form\" />\n\n</form></div>",
+    "settings": null
+  }
+]

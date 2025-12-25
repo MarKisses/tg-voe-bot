@@ -5,10 +5,6 @@ from services.models import Address, City, House, Street
 
 def address_list_keyboard(addresses: list[Address] | None) -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
-    kb.row(
-        InlineKeyboardButton(text="⬅️", callback_data="back:main_menu"),
-        InlineKeyboardButton(text="🏠", callback_data="back:main_menu"),
-    )
     if addresses:
         for address in addresses:
             kb.row(
@@ -19,8 +15,9 @@ def address_list_keyboard(addresses: list[Address] | None) -> InlineKeyboardMark
             )
     kb.row(
         InlineKeyboardButton(
-            text="➕ Додати нову адресу", callback_data="go:add_address"
-        )
+            text="Додати нову адресу", callback_data="go:add_address"
+        ),
+        InlineKeyboardButton(text="⬅️", callback_data="back:main_menu"),
     )
     return kb.as_markup()
 

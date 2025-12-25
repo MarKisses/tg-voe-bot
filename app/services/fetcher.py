@@ -66,7 +66,8 @@ async def fetch_houses(street_id: int | None, query: str | None):
 
 
 async def fetch_schedule(city_id: int, street_id: int, house_id: int) -> str:
-    url = "/disconnection/detailed"
+    # url = "/disconnection/detailed"
+    url = ""
 
     params = {
         "search_type": 0,
@@ -96,4 +97,5 @@ async def fetch_schedule(city_id: int, street_id: int, house_id: int) -> str:
             raise ValueError("No textarea found in AJAX drupal response")
         return json.loads(textarea.text)[3]["data"]
 
-    return r[3]["data"]
+    value = next((item for item in r if item.get("command","") == "insert"))
+    return value["data"]
