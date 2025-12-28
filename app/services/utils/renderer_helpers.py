@@ -3,12 +3,12 @@ from typing import Literal
 from PIL import ImageDraw, ImageFont
 from services.models import FullCell, HalfCell
 
-COLOR_BG = (236, 236, 236)
 COLOR_HEADER = (34, 102, 102)
 COLOR_GRID = (34, 34, 34)
 COLOR_OFF = (170, 57, 57)
 COLOR_POSSIBLE = (170, 108, 57) 
-COLOR_OK = (230, 230, 230)  
+COLOR_BG = (255, 255, 255)
+COLOR_OK = (255, 255, 255) 
 
 
 def half_color(h: HalfCell | FullCell):
