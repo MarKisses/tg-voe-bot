@@ -4,9 +4,10 @@ from PIL import ImageDraw, ImageFont
 from services.models import FullCell, HalfCell
 
 COLOR_BG = (255, 255, 255)
+COLOR_HEADER = (102, 111, 117) # #666F75 Dark gray
 COLOR_GRID = (0, 0, 0)
-COLOR_OFF = (0, 150, 220)  # blue
-COLOR_POSSIBLE = (240, 180, 0)  # yellow
+COLOR_OFF = (245, 106, 105)  # #F56A69 Red
+COLOR_POSSIBLE = (216, 214, 93)  # #D8D65D Slightly desaturated yellow
 COLOR_OK = (230, 230, 230)  # gray
 
 

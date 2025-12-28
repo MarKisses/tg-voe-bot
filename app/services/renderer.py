@@ -9,6 +9,7 @@ from .utils.renderer_helpers import (
     COLOR_GRID,
     COLOR_OFF,
     COLOR_POSSIBLE,
+    COLOR_HEADER,
     TextBox,
     half_color,
 )
@@ -32,7 +33,7 @@ def render_schedule_image(
     header_text = f"{queue} | {date} | {address}"
     draw.rectangle(
         [col_w / 2, row_h / 2, IMAGE_W - (col_w / 2), row_h / 2 + row_h],
-        fill=(75, 130, 180),
+        fill=COLOR_HEADER,
         outline=COLOR_GRID,
         width=4,
     )
