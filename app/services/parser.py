@@ -161,6 +161,17 @@ def parse_schedule(
                 cells=day_rows,
             )
         )
+        
+    if not any(
+        day.has_disconnections for day in disconnection_days
+    ):
+        logger.info(f"No disconnections found for {address_name} for the next {max_days} days.")
+        # If no disconnections are found, we can return early with an empty response.
+        return ScheduleResponse(
+            address=address_name,
+            disconnection_queue=queue,
+            disconnections=[]
+        )
 
     result = ScheduleResponse(
         address=address_name,
