@@ -61,6 +61,10 @@ class TextBox:
 
     def draw_text(self, text: str):
         font_size = self.max_font_size
+        total_h = 0
+        lines = []
+        heights = []
+        font = None
 
         # Determine font size that fits in the box
         while font_size >= self.min_font_size:
