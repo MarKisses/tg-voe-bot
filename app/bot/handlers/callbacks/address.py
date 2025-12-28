@@ -16,6 +16,7 @@ from services import fetch_schedule, parse_schedule, render_schedule_image
 from services.models import Address, City, House, ScheduleResponse, Street
 from storage import subscription_storage, user_storage
 from bot.utils import show_service_menu
+from datetime import datetime, timedelta
 
 logger = create_logger(__name__)
 
@@ -217,7 +218,7 @@ async def select_address_callback(callback: CallbackQuery, state: FSMContext):
         )
         
         raw = await fetch_schedule(address.city.id, address.street.id, address.house.id)
-        parsed = parse_schedule(raw, address.name, max_days=3)
+        parsed = parse_schedule(raw, address.name, max_days=2)
 
         if not parsed.disconnections:
             return await show_service_menu(
@@ -248,6 +249,7 @@ async def day_select_callback(callback: CallbackQuery, state: FSMContext):
     logger.info(f"User {callback.from_user.id} selected day: {callback.data}")
     _, day_offset, addr_id = callback.data.split(":", 2)
     day_offset = int(day_offset)
+    date = (datetime.now() + timedelta(days=day_offset)).date().isoformat()
 
     schedule_data = await user_storage.get_cached_schedule(addr_id)
     schedule = ScheduleResponse.model_validate(schedule_data)
@@ -262,7 +264,7 @@ async def day_select_callback(callback: CallbackQuery, state: FSMContext):
             old_msg_id=callback.message.message_id,
         ) 
 
-        if len(schedule.disconnections) < day_offset + 1:
+        if not schedule.get_day_schedule(date):
             return await show_service_menu(
                 bot=callback.bot,
                 chat_id=callback.message.chat.id,
@@ -270,7 +272,7 @@ async def day_select_callback(callback: CallbackQuery, state: FSMContext):
                 reply_markup=day_list_keyboard(addr_id),
             )
 
-        if not schedule.disconnections[day_offset].has_disconnections:
+        if not schedule.get_day_schedule(date).has_disconnections:
             return await show_service_menu(
                 bot=callback.bot,
                 chat_id=callback.message.chat.id,
@@ -280,9 +282,9 @@ async def day_select_callback(callback: CallbackQuery, state: FSMContext):
 
         buffered_file = BufferedInputFile(
             render_schedule_image(
-                day=schedule.disconnections[day_offset],
+                day=schedule.get_day_schedule(date),
                 queue=schedule.disconnection_queue,
-                date=schedule.disconnections[day_offset].date,
+                date=date,
                 address=schedule.address,
             ).getvalue(),
             filename="schedule.png",

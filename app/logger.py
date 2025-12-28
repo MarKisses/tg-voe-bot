@@ -22,7 +22,7 @@ class ColorFormatter(logging.Formatter):
 
 def init_logging():
     handler = logging.StreamHandler(sys.stdout)
-    handler.setLevel(logging.INFO)
+    handler.setLevel(logging.DEBUG)
 
     formatter = ColorFormatter(
         fmt="%(asctime)s | %(levelname)-8s | %(name)-30s | %(message)s",

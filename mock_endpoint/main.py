@@ -88,20 +88,6 @@ async def get_schedule(request):
             data={"error": "Check your query params!"},
         )
 
-    # body = await request.json()
-    # data = {
-    #     "search_type": body.get("search_type"),
-    #     "city_id": body.get("city_id"),
-    #     "street_id": body.get("street_id"),
-    #     "house_id": body.get("house_id"),
-    #     "form_id": body.get("disconnection_detailed_search_form"),
-    # }
-
-    # if not any(data.values()):
-    #     return web.json_response(
-    #         status=404,
-    #         data={"error": "Check your body params!"},
-    #     )
 
     empty_schedule = open(
         "./responses_json/graph_empty.json",
@@ -114,10 +100,8 @@ async def get_schedule(request):
         encoding="utf-8",
     )
 
-    schedule_to_send = random.choice(
-        (json.load(empty_schedule), json.load(full_schedule))
-    )
-    return web.json_response(schedule_to_send)
+    # schedule_to_send = random.choice((json.load(full_schedule)))
+    return web.json_response(json.load(full_schedule))
 
 
 app = web.Application()

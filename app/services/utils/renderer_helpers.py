@@ -3,12 +3,12 @@ from typing import Literal
 from PIL import ImageDraw, ImageFont
 from services.models import FullCell, HalfCell
 
-COLOR_BG = (255, 255, 255)
-COLOR_HEADER = (102, 111, 117) # #666F75 Dark gray
-COLOR_GRID = (0, 0, 0)
-COLOR_OFF = (245, 106, 105)  # #F56A69 Red
-COLOR_POSSIBLE = (216, 214, 93)  # #D8D65D Slightly desaturated yellow
-COLOR_OK = (230, 230, 230)  # gray
+COLOR_BG = (236, 236, 236)
+COLOR_HEADER = (34, 102, 102)
+COLOR_GRID = (34, 34, 34)
+COLOR_OFF = (170, 57, 57)
+COLOR_POSSIBLE = (170, 108, 57) 
+COLOR_OK = (230, 230, 230)  
 
 
 def half_color(h: HalfCell | FullCell):

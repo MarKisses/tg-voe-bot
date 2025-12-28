@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from logger import create_logger
 from lxml import etree
@@ -10,16 +10,14 @@ from .utils.parser_helpers import (
     _get_classes,
     _has_disconnection,
     _inc_time,
+    _parse_day_label,
 )
 
 logger = create_logger(__name__)
 
 
-def parse_schedule(
-    html: str, address_name: str, max_days: int = 2
-) -> ScheduleResponse:
+def parse_schedule(html: str, address_name: str, max_days: int = 2) -> ScheduleResponse:
     logger.debug("Starting parsing")
-
 
     tree = etree.HTML(html)
     queue_nodes = tree.xpath(
@@ -27,7 +25,7 @@ def parse_schedule(
     )
     logger.debug(queue_nodes)
 
-    #* With new html structure it returns list of all p elements inside the parent div.
+    # * With new html structure it returns list of all p elements inside the parent div.
     # Like:
     # ["6.2 черга", "За Вашою адресою наразі не зафіксовано аварійних та планових відключень.", ...]
     # TODO: It can be useful to implement notifications based on outages in the exact moment.
@@ -40,6 +38,22 @@ def parse_schedule(
         )
 
     queue = queue_nodes[0].strip()
+
+    days = tree.xpath(
+        "(//div[contains(@class, 'disconnection-detailed-table-container')])[1]"
+        "/div[contains(@class, 'day_col')]"
+        "/text()"
+    )
+
+    if not days:
+        logger.warning(f"No day columns found in the schedule for {address_name}.")
+        return ScheduleResponse(
+            address=address_name,
+            disconnection_queue=queue,
+            disconnections=[],
+        )
+
+    day_dates = [_parse_day_label(day) for day in days]
 
     # Hours in format "HH:00"
     hours = [f"{h:02d}:00" for h in range(24)]
@@ -56,8 +70,7 @@ def parse_schedule(
 
     now = datetime.now()
 
-    for day_offset in range(max_days):
-        day_date = (now + timedelta(days=day_offset)).date().isoformat()
+    for day_date in day_dates:
         logger.info(f"Parsing schedule for {address_name} for date: {day_date}")
 
         day_rows = []
@@ -156,21 +169,19 @@ def parse_schedule(
 
         disconnection_days.append(
             DaySchedule(
-                date=day_date,
+                date=day_date.isoformat(),
                 has_disconnections=day_has_disconnections,
                 cells=day_rows,
             )
         )
-        
-    if not any(
-        day.has_disconnections for day in disconnection_days
-    ):
-        logger.info(f"No disconnections found for {address_name} for the next {max_days} days.")
+
+    if not any(day.has_disconnections for day in disconnection_days):
+        logger.info(
+            f"No disconnections found for {address_name} for the next {max_days} days."
+        )
         # If no disconnections are found, we can return early with an empty response.
         return ScheduleResponse(
-            address=address_name,
-            disconnection_queue=queue,
-            disconnections=[]
+            address=address_name, disconnection_queue=queue, disconnections=[]
         )
 
     result = ScheduleResponse(
