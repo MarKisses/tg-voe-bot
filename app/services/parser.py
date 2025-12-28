@@ -26,7 +26,7 @@ def parse_schedule(
         "//div[contains(@class,'disconnection-detailed-table')]//p/text()"
     )
 
-    logger.info(queue_nodes)
+    logger.debug(queue_nodes)
     if not queue_nodes:
         return ScheduleResponse(
             address=address_name,
@@ -36,7 +36,7 @@ def parse_schedule(
 
     queue = queue_nodes[0].strip()
 
-    logger.info("Starting parsing")
+    logger.debug("Starting parsing")
     # hours = [
     #     h.strip()
     #     for h in tree.xpath(
@@ -184,7 +184,7 @@ def parse_schedule(
         disconnections=disconnection_days,
     )
 
-    logger.info(result)
+    logger.debug(result)
     return ScheduleResponse(
         address=address_name,
         disconnection_queue=queue,

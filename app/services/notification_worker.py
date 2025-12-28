@@ -4,13 +4,13 @@ from typing import Literal
 from aiogram import Bot
 from aiogram.types.input_file import BufferedInputFile
 from bot.keyboards.main_menu import main_menu_keyboard
+from bot.utils import replace_service_menu
 from logger import create_logger
 from services.fetcher import fetch_schedule
 from services.models import ScheduleResponse
 from services.parser import parse_schedule
 from services.renderer import render_schedule_image
 from storage import subscription_storage, user_storage
-from bot.utils import show_service_menu, replace_service_menu
 
 SubscriptionKinds = Literal["today", "tomorrow"]
 
@@ -32,6 +32,8 @@ async def _update_hashes_for_address(addr_id: str, schedule: ScheduleResponse):
 
     today_old = await subscription_storage.get_last_hash(addr_id, "today")
     tomorrow_old = await subscription_storage.get_last_hash(addr_id, "tomorrow")
+
+    today_hash, tomorrow_hash = None, None
 
     if today_old is not None:
         today_old = today_old
@@ -56,10 +58,8 @@ async def _update_hashes_for_address(addr_id: str, schedule: ScheduleResponse):
         tomorrow_data = tomorrow.model_dump()
         tomorrow_hash = _calc_hash(tomorrow_data)
 
-        # If user just added subscription, do not send notification immediately
-        if tomorrow_old is None:
-            await subscription_storage.set_last_hash(addr_id, "tomorrow", tomorrow_hash)
-        elif tomorrow_hash != tomorrow_old and tomorrow.has_disconnections:
+        # On contrary, for tomorrow we always notify on first fetch
+        if tomorrow_hash != tomorrow_old and tomorrow.has_disconnections:
             await subscription_storage.set_last_hash(addr_id, "tomorrow", tomorrow_hash)
             changed.append("tomorrow")
 
