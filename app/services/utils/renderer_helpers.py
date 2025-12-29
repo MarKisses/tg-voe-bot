@@ -5,8 +5,8 @@ from services.models import FullCell, HalfCell
 
 COLOR_HEADER = (34, 102, 102)
 COLOR_GRID = (34, 34, 34)
-COLOR_OFF = (170, 57, 57)
-COLOR_POSSIBLE = (170, 108, 57) 
+COLOR_OFF = (249, 110, 91)
+COLOR_POSSIBLE = (255, 226, 175) 
 COLOR_BG = (255, 255, 255)
 COLOR_OK = (255, 255, 255) 
 
