@@ -9,8 +9,10 @@ from .utils.parser_helpers import (
     _fmt_time,
     _get_classes,
     _has_disconnection,
+    _has_full_disconnection,
     _inc_time,
     _parse_day_label,
+    _parse_css_var
 )
 
 logger = create_logger(__name__)
@@ -85,22 +87,14 @@ def parse_schedule(html: str, address_name: str, max_days: int = 2) -> ScheduleR
 
             # Classes for full-hour
             cell_classes = _get_classes(cell)
-            full_off = _has_disconnection(cell_classes)
-            full_confirm = _confirm_from_classes(cell_classes)
+            full_off = _has_full_disconnection(cell_classes)
+            partially_off = _has_disconnection(cell_classes)
+            confirm_disconnection = _confirm_from_classes(cell_classes)
 
-            # TODO halves. With new HTML structure needs to be reworked.
-            # TODO just don't have half elements in the new structure yet.
-            left_el = cell.xpath(
-                ".//div[contains(concat(' ', normalize-space(@class), ' '), ' half ') "
-                "and contains(concat(' ', normalize-space(@class), ' '), ' left ')]"
-            )
-            right_el = cell.xpath(
-                ".//div[contains(concat(' ', normalize-space(@class), ' '), ' half ') "
-                "and contains(concat(' ', normalize-space(@class), ' '), ' right ')]"
-            )
+            # TODO halves. НАДО ПРИЧЕСАТЬ!
+            fill_el = cell.xpath(".//div[contains(concat(' ', normalize-space(@class), ' '), ' fill ')]")
 
-            left_el = left_el[0] if left_el else None
-            right_el = right_el[0] if right_el else None
+            fill_el = fill_el[0] if fill_el else None
 
             try:
                 base_h, base_m = map(int, hour_str.split(":"))
@@ -119,40 +113,66 @@ def parse_schedule(html: str, address_name: str, max_days: int = 2) -> ScheduleR
                         start=_fmt_time(l_h, l_m),
                         end=_fmt_time(l_e_h, l_e_m),
                         off=True,
-                        confirm=full_confirm,
+                        confirm=confirm_disconnection,
                     ),
                     HalfCell(
                         start=_fmt_time(r_h, r_m),
                         end=_fmt_time(r_e_h, r_e_m),
                         off=True,
-                        confirm=full_confirm,
+                        confirm=confirm_disconnection,
                     ),
                 ]
-            else:
-                left_classes = _get_classes(left_el)
-                right_classes = _get_classes(right_el)
+            elif partially_off:
+                left_off = right_off = False
+                confirmed = None
 
-                left_off = _has_disconnection(left_classes)
-                left_confirm = _confirm_from_classes(left_classes)
+                if fill_el is not None:
+                    style = fill_el.attrib.get("style", "")
+                    start_pct = _parse_css_var(style, "start") or 0
+                    size_pct = _parse_css_var(style, "size") or 0
 
-                right_off = _has_disconnection(right_classes)
-                right_confirm = _confirm_from_classes(right_classes)
+                    start_min = int(start_pct * 60 / 100)
+                    end_min = min(60, int((start_pct + size_pct) * 60 / 100))
 
-                if left_off or right_off:
-                    day_has_disconnections = True
+                    def overlaps(a_start, a_end, b_start, b_end):
+                        return b_start < a_end and b_end > a_start
+
+                    left_off = overlaps(0, 30, start_min, end_min)
+                    right_off = overlaps(30, 60, start_min, end_min)
+
+                    confirmed = "confirmed" in _get_classes(fill_el)
+
+                    if left_off or right_off:
+                        day_has_disconnections = True
 
                 halves = [
                     HalfCell(
                         start=_fmt_time(l_h, l_m),
                         end=_fmt_time(l_e_h, l_e_m),
                         off=bool(left_off),
-                        confirm=left_confirm,
+                        confirm=confirmed if left_off else None,
                     ),
                     HalfCell(
                         start=_fmt_time(r_h, r_m),
                         end=_fmt_time(r_e_h, r_e_m),
                         off=bool(right_off),
-                        confirm=right_confirm,
+                        confirm=confirmed if right_off else None,
+                    ),
+                ]
+                
+            else:
+                halves = [
+                    HalfCell(
+                        start=_fmt_time(l_h, l_m),
+                        end=_fmt_time(l_e_h, l_e_m),
+                        off=False,
+                        confirm=None,
+                    ),
+                    HalfCell(
+                        start=_fmt_time(r_h, r_m),
+                        end=_fmt_time(r_e_h, r_e_m),
+                        off=False,
+                        confirm=None,
                     ),
                 ]
 
@@ -161,7 +181,7 @@ def parse_schedule(html: str, address_name: str, max_days: int = 2) -> ScheduleR
             day_rows.append(
                 HourCell(
                     hour=hour_str,
-                    full=FullCell(off=bool(full_off), confirm=full_confirm),
+                    full=FullCell(off=bool(full_off), confirm=confirm_disconnection),
                     inferred_full_off=inferred_full_off,
                     halves=halves,
                 )

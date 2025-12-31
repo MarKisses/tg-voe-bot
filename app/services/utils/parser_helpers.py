@@ -1,5 +1,6 @@
+import re
+from datetime import date, datetime
 from typing import List, Optional, Tuple
-from datetime import datetime, date
 
 
 def _confirm_from_classes(classes: List[str]) -> Optional[bool]:
@@ -19,8 +20,23 @@ def _has_disconnection(classes: List[str]) -> Optional[bool]:
     return "has_disconnection" in classes
 
 
+def _has_full_disconnection(classes: List[str]) -> Optional[bool]:
+    if not classes:
+        return None
+
+    return all(
+        (sep_class in classes for sep_class in ["has_disconnection", "full_hour"])
+    )
+
+
 def _safe_get_classes(el) -> List[str]:
     return el.get("class", []) if el else []
+
+
+def _parse_css_var(style: str, name: str) -> float | None:
+    m = re.search(rf"--{name}\s*:\s*([\d.]+)", style)
+    return float(m.group(1)) if m else None
+
 
 def _get_classes(el) -> list[str]:
     """
@@ -49,10 +65,10 @@ def _parse_day_label(label: str) -> date:
 
     _, data_label = label.split(" ")
     day, month = map(int, data_label.split("."))
-    
+
     candidate_date = datetime(year=today.year, month=month, day=day).date()
-    
+
     if candidate_date < today:
         candidate_date = datetime(year=today.year + 1, month=month, day=day).date()
-        
+
     return candidate_date
