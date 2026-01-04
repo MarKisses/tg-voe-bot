@@ -2,21 +2,15 @@ from typing import Literal
 
 from PIL import ImageDraw, ImageFont
 from services.models import FullCell, HalfCell
-
-COLOR_HEADER = (34, 102, 102)
-COLOR_GRID = (34, 34, 34)
-COLOR_OFF = (249, 110, 91)
-COLOR_POSSIBLE = (255, 226, 175) 
-COLOR_BG = (255, 255, 255)
-COLOR_OK = (255, 255, 255) 
+from config import settings
 
 
 def half_color(h: HalfCell | FullCell):
     if h.off and h.confirm is True:
-        return COLOR_OFF
+        return settings.renderer.color_off
     if h.off and h.confirm is False:
-        return COLOR_POSSIBLE
-    return COLOR_OK
+        return settings.renderer.color_possible
+    return settings.renderer.color_ok
 
 
 class TextBox:
@@ -30,7 +24,7 @@ class TextBox:
         min_font_size: int = 2,
         line_spacing: int = 4,
         align: Literal["center", "left", "right"] = "center",
-        font_path: str = "app/services/utils/fonts/arial.ttf",
+        font_weight: Literal["regular", "bold"] = "regular",
         valign: Literal["center", "top", "bottom"] = "center",
         fill: str = "black",
         padding_left: int = 0,
@@ -42,7 +36,7 @@ class TextBox:
         self.x, self.y = xy_top_left
         self.width = width
         self.height = height
-        self.font_path = font_path
+        self.font_path = settings.renderer.base_font_path
         self.max_font_size = max_font_size
         self.min_font_size = min_font_size
         self.line_spacing = line_spacing
@@ -137,7 +131,7 @@ class TextBox:
         widths = []
 
         for line in lines:
-            bbox = self._draw.textbbox((0, 0), line, font=font)
+            bbox = self._draw.textbbox((0, 0), line, font=font, anchor="mt")
             w = bbox[2] - bbox[0]
             h = bbox[3] - bbox[1]
             heights.append(h)

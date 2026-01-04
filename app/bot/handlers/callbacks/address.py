@@ -262,7 +262,9 @@ async def day_select_callback(callback: CallbackQuery, state: FSMContext):
             chat_id=callback.message.chat.id,
             text=settings.messages_loading.loading_schedule,
             old_msg_id=callback.message.message_id,
-        ) 
+        )
+        
+        logger.debug(schedule) 
 
         if not schedule.get_day_schedule(date):
             return await show_service_menu(

@@ -5,14 +5,11 @@ from PIL import Image, ImageDraw
 from services.models import DaySchedule
 
 from .utils.renderer_helpers import (
-    COLOR_BG,
-    COLOR_GRID,
-    COLOR_OFF,
-    COLOR_POSSIBLE,
-    COLOR_HEADER,
     TextBox,
     half_color,
 )
+
+from config import settings
 
 
 def render_schedule_image(
@@ -26,15 +23,15 @@ def render_schedule_image(
     col_w = IMAGE_W // (cols + 1)  # +1 col for side paddings
     row_h = IMAGE_H // (rows + 4)  # +4 rows for upper and bottom paddings
 
-    img = Image.new("RGB", (IMAGE_W, IMAGE_H), COLOR_BG)
+    img = Image.new("RGBA", (IMAGE_W, IMAGE_H), settings.renderer.color_bg)
     draw = ImageDraw.Draw(img)
 
     # ---- Заголовок ----
     header_text = f"{queue} | {date} | {address}"
     draw.rectangle(
         [col_w / 2, row_h / 2, IMAGE_W - (col_w / 2), row_h / 2 + row_h],
-        fill=COLOR_HEADER,
-        outline=COLOR_GRID,
+        fill=settings.renderer.color_header,
+        outline=settings.renderer.color_grid,
         width=4,
     )
 
@@ -59,6 +56,7 @@ def render_schedule_image(
         hour = hour_obj.hour
         full = hour_obj.full
         halves = hour_obj.halves
+        cell_text_fill = "black"
 
         r = i // cols
         c = i % cols
@@ -72,6 +70,9 @@ def render_schedule_image(
             # confirmed full hour
             color = half_color(full)
             draw.rectangle([x1, y1, x2, y2], fill=color)
+            if full.confirm:
+                cell_text_fill = "white"
+                
         else:
             # left half
             h1 = halves[0]
@@ -84,30 +85,34 @@ def render_schedule_image(
             draw.rectangle([x1 + col_w / 2, y1, x2, y2], fill=h2_color)
 
         cell_text = TextBox(
-            draw, (x1, y1), col_w, row_h, max_font_size=int(IMAGE_W * 0.03)
+            draw, (x1, y1), col_w, row_h, max_font_size=int(IMAGE_W * 0.035), fill=cell_text_fill
         )
         cell_text.draw_text(hour)
 
     for c in range(cols + 1):
         x = col_w / 2 + c * col_w
-        draw.line((x, row_h * 2, x, row_h * 2 + rows * row_h), fill=COLOR_GRID, width=4)
+        draw.line((x, row_h * 2, x, row_h * 2 + rows * row_h), fill=settings.renderer.color_grid, width=4)
 
     for r in range(rows + 1):
         y = row_h * 2 + r * row_h
-        draw.line((col_w / 2, y, col_w / 2 + cols * col_w, y), fill=COLOR_GRID, width=4)
+        draw.line((col_w / 2, y, col_w / 2 + cols * col_w, y), fill=settings.renderer.color_grid, width=4)
 
     # ---- Легенда ----
 
     draw.rounded_rectangle(
         [col_w * 0.5, row_h * 8.5, col_w * 1.1, row_h * 9.5],
         radius=20,
-        fill=COLOR_POSSIBLE,
+        fill=settings.renderer.color_possible,
+        outline=settings.renderer.color_grid,
+        width=2,
     )
 
     draw.rounded_rectangle(
         [col_w * 2.5, row_h * 8.5, col_w * 3.1, row_h * 9.5],
         radius=20,
-        fill=COLOR_OFF,
+        fill=settings.renderer.color_off,
+        outline=settings.renderer.color_grid,
+        width=2,
     )
 
     TextBox(

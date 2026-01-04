@@ -59,7 +59,17 @@ class Messages_Loading(BaseSettings):
     loading_house: str = "Завантаження будинків..."
     
     loading_schedule: str = "Завантаження графіка відключень..."
+    
 
+class Renderer(BaseSettings):
+    color_header: tuple[int, int, int] = (63, 111, 134)
+    color_grid: tuple[int, int, int, int] = (13, 13, 13, 100)
+    color_off: tuple[int, int, int] = (155, 74, 86)
+    color_possible: tuple[int, int, int] = (191, 214, 234)
+    color_bg: tuple[int, int, int] = (255, 255, 255)
+    color_ok: tuple[int, int, int] = (255, 255, 255)
+
+    base_font_path: str = "app/services/utils/fonts/arial.ttf"
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -78,5 +88,6 @@ class Settings(BaseSettings):
     notification: Notification = Notification()
     webhook: Webhook = Webhook()
     messages_loading: Messages_Loading = Messages_Loading()
+    renderer: Renderer = Renderer()
 
 settings = Settings()
