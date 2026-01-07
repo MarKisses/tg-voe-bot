@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime, timedelta
 from typing import Literal
 
 from aiogram import Bot
@@ -11,7 +12,6 @@ from services.models import ScheduleResponse
 from services.parser import parse_schedule
 from services.renderer import render_schedule_image
 from storage import subscription_storage, user_storage
-from datetime import datetime, timedelta
 
 SubscriptionKinds = Literal["today", "tomorrow"]
 
@@ -28,8 +28,6 @@ def _calc_hash(obj: dict) -> str:
 
 
 async def _update_hashes_for_address(addr_id: str, schedule: ScheduleResponse):
-    disconnections = schedule.disconnections
-
     today_date = datetime.now().date().isoformat()
     tomorrow_date = (datetime.now() + timedelta(days=1)).date().isoformat()
 
@@ -101,16 +99,20 @@ async def _process_for_address(
         return set()
 
     changed = await _update_hashes_for_address(addr_id, schedule)
-    
+
     today = datetime.now().date().isoformat()
     tomorrow = (datetime.now() + timedelta(days=1)).date().isoformat()
 
     # 4) sending messages
     if "today" in changed:
         msg = f"⚡ Оновлено графік відключень на сьогодні за адресою {address.name}."
+        day_schedule = schedule.get_day_schedule(today)
+        if not day_schedule:
+            logger.warning(f"No schedule for today for {addr_id}")
+            return processed_users
         buffered_file = BufferedInputFile(
             render_schedule_image(
-                day=schedule.get_day_schedule(today),
+                day=day_schedule,
                 queue=schedule.disconnection_queue,
                 date=today,
                 address=schedule.address,
@@ -128,9 +130,13 @@ async def _process_for_address(
 
     if "tomorrow" in changed:
         msg = f"📅 З'явився/оновився графік на завтра за адресою {address.name}."
+        day_schedule = schedule.get_day_schedule(tomorrow)
+        if not day_schedule:
+            logger.warning(f"No schedule for tomorrow for {addr_id}")
+            return processed_users
         buffered_file = BufferedInputFile(
             render_schedule_image(
-                day=schedule.get_day_schedule(tomorrow),
+                day=day_schedule,
                 queue=schedule.disconnection_queue,
                 date=tomorrow,
                 address=schedule.address,

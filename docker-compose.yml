@@ -6,24 +6,23 @@ services:
     container_name: tg_disconnection_bot
     volumes:
       - ./app:/voe-bot/app
-    ports:
-      - "8000:8000"
     restart: unless-stopped
     environment:
       - TZ=Europe/Kyiv
     env_file:
       - .env
     depends_on:
+      - flaresolver
       - redis
 
   redis:
     image: "redis:alpine"
     container_name: tg_disconnection_bot_redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
+    ports:
+      - "6379:6379"
     env_file:
       - .env
 
@@ -32,8 +31,10 @@ services:
     image: ghcr.io/flaresolverr/flaresolverr:latest
     restart: unless-stopped
     container_name: tg_disconnection_bot_flaresolver
-    ports:
-      - "8191:8191"
+    environment:
+      - TZ=Europe/Kyiv
+
+# Порты мне не нужны, так как у меня все сервисы внутри одной Docker сети
 
 volumes:
   redis_data:
