@@ -54,7 +54,7 @@ class Webhook(BaseSettings):
     @computed_field
     @property
     def full_url(self) -> str:
-        return f"{self.url}:{self.port}/{self.path}"
+        return f"{self.url}:{self.port}{self.path}"
     
 class Messages_Loading(BaseSettings):
     loading_city: str = "Завантаження міст..."
