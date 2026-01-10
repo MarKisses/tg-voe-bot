@@ -1,6 +1,8 @@
 import asyncio
+import ssl
 
 from aiogram import Bot, Dispatcher
+from aiogram.types import FSInputFile
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiohttp.web import Application, AppRunner, Response, TCPSite
 from bot.handlers import register_handlers
@@ -60,6 +62,7 @@ async def run_webhook():
     await bot.set_webhook(
         url=settings.webhook.full_url,
         secret_token=settings.webhook.secret_token,
+        certificate=FSInputFile(settings.webhook.ssl_cert_path),
     )
 
     logger.info("Starting webhook server...")
@@ -68,7 +71,15 @@ async def run_webhook():
 
     runner = AppRunner(app)
     await runner.setup()
-    site = TCPSite(runner, host="0.0.0.0", port=settings.webhook.port)
+
+    ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+    ssl_context.load_cert_chain(
+        certfile=settings.webhook.ssl_cert_path,
+        keyfile=settings.webhook.ssl_key_path,
+    )
+    site = TCPSite(
+        runner, host="0.0.0.0", port=settings.webhook.port, ssl_context=ssl_context
+    )
     await site.start()
 
     await asyncio.Event().wait()

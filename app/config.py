@@ -47,11 +47,14 @@ class Webhook(BaseSettings):
     path: str = "/webhook"
     secret_token: str | None = None
     port: int = 8443
+    
+    ssl_cert_path: str = "opt/telegram-cert/cert.pem"
+    ssl_key_path: str = "opt/telegram-cert/key.pem"
 
     @computed_field
     @property
     def full_url(self) -> str:
-        return f"{self.url}{self.path}"
+        return f"{self.url}:{self.port}/{self.path}"
     
 class Messages_Loading(BaseSettings):
     loading_city: str = "Завантаження міст..."
