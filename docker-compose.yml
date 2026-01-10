@@ -14,6 +14,8 @@ services:
     depends_on:
       - flaresolver
       - redis
+    ports:
+      - "8443:8443"
 
   redis:
     image: "redis:alpine"

@@ -71,6 +71,9 @@ async def run_webhook():
 
     runner = AppRunner(app)
     await runner.setup()
+    
+    logger.info("Loading SSL context for webhook...")
+    logger.debug("Cert path: %s", settings.webhook.ssl_cert_path)
 
     ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
     ssl_context.load_cert_chain(
