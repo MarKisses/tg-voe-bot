@@ -46,7 +46,7 @@ class Webhook(BaseSettings):
     url: str = "http://googlecloudrun.com"
     path: str = "/webhook"
     secret_token: str | None = None
-    port: int = 8080
+    port: int = 8443
 
     @computed_field
     @property
