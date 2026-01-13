@@ -229,7 +229,7 @@ async def select_address_callback(callback: CallbackQuery, state: FSMContext):
                 old_msg_id=callback.message.message_id,
             )
 
-    await user_storage.set_cached_schedule(address.id, parsed.model_dump())
+    await user_storage.set_cached_schedule(address.id, parsed.model_dump(), ttl=600)
 
     await show_service_menu(
         bot=callback.bot,
@@ -252,6 +252,16 @@ async def day_select_callback(callback: CallbackQuery, state: FSMContext):
     date = (datetime.now() + timedelta(days=day_offset)).date().isoformat()
 
     schedule_data = await user_storage.get_cached_schedule(addr_id)
+    
+    if not schedule_data:
+        return await show_service_menu(
+            bot=callback.bot,
+            chat_id=callback.message.chat.id,
+            text="Графік відключень не знайдено в кеші. Будь ласка, завантажте його знову.",
+            reply_markup=full_address_keyboard(addr_id),
+            old_msg_id=callback.message.message_id,
+        )
+    
     schedule = ScheduleResponse.model_validate(schedule_data)
 
     async with ChatActionSender(
