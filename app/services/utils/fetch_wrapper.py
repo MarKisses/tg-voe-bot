@@ -95,8 +95,9 @@ async def fetch(
                 attempt += 1
                 if attempt > MAX_RETRIES:
                     logger.error(f"❌ {url} failed after {MAX_RETRIES} retries ({err})")
-                    raise
-
+                    raise httpx.HTTPStatusError(
+                        f"Failed after {MAX_RETRIES} retries", request=r.request, response=r
+                    )
                 delay = BASE_DELAY * (2 ** (attempt - 1))
                 logger.warning(
                     f"Retry {attempt}/{MAX_RETRIES} after {err}, sleeping {delay:.1f}s"
