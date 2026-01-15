@@ -16,7 +16,7 @@ from config import settings
 from exceptions import VoeDownException
 from services.fetcher import fetch_cities, fetch_houses, fetch_streets
 from services.models import City, House, Street
-from utils.message_editor import show_service_menu
+from bot.utils import show_service_menu
 
 logger = logging.getLogger(__name__)
 
