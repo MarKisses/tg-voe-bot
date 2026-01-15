@@ -1,19 +1,22 @@
 import logging
 
-from aiogram import Router, F
+from aiogram import F, Router
 from aiogram.enums import ChatAction
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from aiogram.utils.chat_action import ChatActionSender
+from bot.keyboards import back_to_main_menu_keyboard
 from bot.keyboards.address_list import (
     cities_list_keyboard,
     houses_list_keyboard,
     streets_list_keyboard,
 )
 from bot.states.AddressState import AddressState
+from config import settings
+from exceptions import VoeDownException
 from services.fetcher import fetch_cities, fetch_houses, fetch_streets
 from services.models import City, House, Street
-from config import settings
+from utils.message_editor import show_service_menu
 
 logger = logging.getLogger(__name__)
 
@@ -30,21 +33,21 @@ async def choose_city_handler(message: Message, state: FSMContext):
     msg_id, chat_id = state_data.get("msg_id"), state_data.get("chat_id")
 
     logger.info(f"User {message.from_user.id} is searching for city: {city_name}")
-    async with ChatActionSender(
-        bot=bot, chat_id=chat_id, action=ChatAction.TYPING
-    ):
+    async with ChatActionSender(bot=bot, chat_id=chat_id, action=ChatAction.TYPING):
         await message.bot.edit_message_text(
             text=settings.messages_loading.loading_city,
             chat_id=chat_id,
             message_id=msg_id,
         )
-        response = await fetch_cities(city_name)
-    if not response:
-        return await message.bot.edit_message_text(
-            text="Місто не знайдено. Спробуйте ще раз.",
-            chat_id=chat_id,
-            message_id=msg_id,
-        )
+        try:
+            response = await fetch_cities(city_name)
+        except VoeDownException:
+            return await show_service_menu(
+                bot=message.bot,
+                chat_id=message.chat.id,
+                text="VOE впав 😢",
+                reply_markup=back_to_main_menu_keyboard(),
+            )
 
     cities = [City.from_api(data) for data in response]
 
@@ -81,7 +84,16 @@ async def choose_street_handler(message: Message, state: FSMContext):
             chat_id=chat_id,
             message_id=msg_id,
         )
-        response = await fetch_streets(chosen_city.id, street_name)
+
+        try:
+            response = await fetch_streets(chosen_city.id, street_name)
+        except VoeDownException:
+            return await show_service_menu(
+                bot=message.bot,
+                chat_id=message.chat.id,
+                text="VOE впав 😢",
+                reply_markup=back_to_main_menu_keyboard(),
+            )
     if not response:
         await message.bot.edit_message_text(
             "Вулицю не знайдено. Спробуйте ще раз.", chat_id=chat_id, message_id=msg_id
@@ -124,7 +136,15 @@ async def choose_house_handler(message: Message, state: FSMContext):
             chat_id=chat_id,
             message_id=msg_id,
         )
-        response = await fetch_houses(street_id=chosen_street.id, query=house_name)
+        try:
+            response = await fetch_houses(street_id=chosen_street.id, query=house_name)
+        except VoeDownException:
+            return await show_service_menu(
+                bot=message.bot,
+                chat_id=message.chat.id,
+                text="VOE впав 😢",
+                reply_markup=back_to_main_menu_keyboard(),
+            )
     if not response:
         return await message.bot.edit_message_text(
             "Будинок не знайдено. Спробуйте ще раз.", chat_id=chat_id, message_id=msg_id

@@ -4,6 +4,7 @@ import httpx
 from bs4 import BeautifulSoup
 from config import settings
 from logger import create_logger
+from exceptions import VoeDownException
 
 from .utils.fetch_wrapper import fetch
 
@@ -15,8 +16,10 @@ async def fetch_cities(query: str | None):
     params = {"q": query}
     try:
         r = await fetch(url, params=params)
-    except httpx.HTTPError as e:
+    except httpx.HTTPStatusError as e:
         logger.error("Failed to fetch cities: %s", e)
+        if e.response.status_code >= 500:
+            raise VoeDownException
         return []
     logger.info(r)
 
@@ -35,8 +38,10 @@ async def fetch_streets(city_id: int | None, query: str | None):
     params = {"q": query}
     try:
         r = await fetch(url, params=params)
-    except httpx.HTTPError as e:
+    except httpx.HTTPStatusError as e:
         logger.error("Failed to fetch streets: %s", e)
+        if e.response.status_code >= 500:
+            raise VoeDownException
         return []
 
     if settings.flare.operating_mode == "proxy":
@@ -53,8 +58,10 @@ async def fetch_houses(street_id: int | None, query: str | None):
     params = {"q": query}
     try:
         r = await fetch(url, params=params)
-    except httpx.HTTPError as e:
+    except httpx.HTTPStatusError as e:
         logger.error("Failed to fetch houses: %s", e)
+        if e.response.status_code >= 500:
+            raise VoeDownException
         return []
     if settings.flare.operating_mode == "proxy":
         soup = BeautifulSoup(r["solution"]["response"], "lxml")
@@ -86,8 +93,10 @@ async def fetch_schedule(city_id: int, street_id: int, house_id: int) -> str:
 
     try:
         r = await fetch(url, params=params, data=data, method="POST")
-    except httpx.HTTPError as e:
+    except httpx.HTTPStatusError as e:
         logger.error("Failed to fetch schedule: %s", e)
+        if e.response.status_code >= 500:
+            raise VoeDownException
         return ""
 
     if settings.flare.operating_mode == "proxy":

@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from aiogram import Router
 from aiogram.enums import ChatAction
 from aiogram.fsm.context import FSMContext
@@ -11,12 +13,11 @@ from bot.keyboards.address_list import (
 from bot.states.AddressState import AddressState
 from bot.utils import replace_service_menu, show_service_menu
 from config import settings
+from exceptions import VoeDownException
 from logger import create_logger
 from services import fetch_schedule, parse_schedule, render_schedule_image
 from services.models import Address, City, House, ScheduleResponse, Street
 from storage import subscription_storage, user_storage
-from bot.utils import show_service_menu
-from datetime import datetime, timedelta
 
 logger = create_logger(__name__)
 
@@ -27,10 +28,10 @@ router = Router(name=__name__)
 async def city_callback(callback: CallbackQuery, state: FSMContext):
     if callback.bot is None:
         return
-    
+
     logger.info(f"User {callback.from_user.id} selected city: {callback.data}")
     _, city = callback.data.split(":", 1)
-    
+
     await state.update_data(
         msg_id=callback.message.message_id, chat_id=callback.message.chat.id
     )
@@ -57,7 +58,7 @@ async def city_callback(callback: CallbackQuery, state: FSMContext):
 async def city_select_callback(callback: CallbackQuery, state: FSMContext):
     if callback.bot is None:
         return
-    
+
     logger.info(f"User {callback.from_user.id} selected city: {callback.data}")
     _, city_id = callback.data.split(":", 1)
     city_id = int(city_id)
@@ -93,7 +94,7 @@ async def city_select_callback(callback: CallbackQuery, state: FSMContext):
 async def street_select_callback(callback: CallbackQuery, state: FSMContext):
     if callback.bot is None:
         return
-    
+
     logger.info(f"User {callback.from_user.id} selected street: {callback.data}")
     _, street_id = callback.data.split(":", 1)
     street_id = int(street_id)
@@ -109,7 +110,7 @@ async def street_select_callback(callback: CallbackQuery, state: FSMContext):
             chat_id=callback.message.chat.id,
             text="Вибрану вулицю не знайдено. Спробуйте ще раз.",
             old_msg_id=callback.message.message_id,
-        ) 
+        )
     await state.update_data(chosen_street=street.model_dump())
     await state.update_data(
         msg_id=callback.message.message_id, chat_id=callback.message.chat.id
@@ -194,7 +195,7 @@ async def address_menu_callback(callback: CallbackQuery, state: FSMContext):
 async def select_address_callback(callback: CallbackQuery, state: FSMContext):
     if callback.bot is None:
         return
-    
+
     logger.info(f"User {callback.from_user.id} selected address: {callback.data}")
     _, address_id = callback.data.split(":", 1)
     address = await user_storage.get_address_by_id(callback.from_user.id, address_id)
@@ -205,7 +206,6 @@ async def select_address_callback(callback: CallbackQuery, state: FSMContext):
             text="Вибрана адреса не знайдена. Спробуйте ще раз.",
             old_msg_id=callback.message.message_id,
         )
-        
 
     async with ChatActionSender(
         bot=callback.bot, chat_id=callback.message.chat.id, action=ChatAction.TYPING
@@ -216,8 +216,20 @@ async def select_address_callback(callback: CallbackQuery, state: FSMContext):
             text=settings.messages_loading.loading_schedule,
             old_msg_id=callback.message.message_id,
         )
-        
-        raw = await fetch_schedule(address.city.id, address.street.id, address.house.id)
+
+        try:
+            raw = await fetch_schedule(
+                address.city.id, address.street.id, address.house.id
+            )
+        except VoeDownException:
+            return await show_service_menu(
+                bot=callback.bot,
+                chat_id=callback.message.chat.id,
+                text="VOE впав 😢",
+                reply_markup=full_address_keyboard(address_id),
+                old_msg_id=callback.message.message_id,
+            )
+
         parsed = parse_schedule(raw, address.name, max_days=2)
 
         if not parsed.disconnections:
@@ -245,14 +257,14 @@ async def select_address_callback(callback: CallbackQuery, state: FSMContext):
 async def day_select_callback(callback: CallbackQuery, state: FSMContext):
     if callback.bot is None:
         return
-    
+
     logger.info(f"User {callback.from_user.id} selected day: {callback.data}")
     _, day_offset, addr_id = callback.data.split(":", 2)
     day_offset = int(day_offset)
     date = (datetime.now() + timedelta(days=day_offset)).date().isoformat()
 
     schedule_data = await user_storage.get_cached_schedule(addr_id)
-    
+
     if not schedule_data:
         return await show_service_menu(
             bot=callback.bot,
@@ -261,7 +273,7 @@ async def day_select_callback(callback: CallbackQuery, state: FSMContext):
             reply_markup=full_address_keyboard(addr_id),
             old_msg_id=callback.message.message_id,
         )
-    
+
     schedule = ScheduleResponse.model_validate(schedule_data)
 
     async with ChatActionSender(
@@ -273,8 +285,8 @@ async def day_select_callback(callback: CallbackQuery, state: FSMContext):
             text=settings.messages_loading.loading_schedule,
             old_msg_id=callback.message.message_id,
         )
-        
-        logger.debug(schedule) 
+
+        logger.debug(schedule)
 
         if not schedule.get_day_schedule(date):
             return await show_service_menu(
@@ -318,7 +330,7 @@ async def day_select_callback(callback: CallbackQuery, state: FSMContext):
 async def delete_address_callback(callback: CallbackQuery, state: FSMContext):
     if callback.bot is None:
         return
-    
+
     logger.info(
         f"User {callback.from_user.id} requested to delete address: {callback.data}"
     )
