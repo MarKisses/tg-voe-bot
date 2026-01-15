@@ -1,5 +1,4 @@
 import asyncio
-from asyncio import Semaphore
 
 import httpx
 from config import settings
@@ -29,7 +28,8 @@ async def _attempt_request(
 
 
 # Limit concurrent HTTP requests
-http_sem = Semaphore(3)
+http_sem = asyncio.Semaphore(3)
+cf_lock = asyncio.Lock()
 
 
 async def fetch(
@@ -58,24 +58,34 @@ async def fetch(
                     r = await _attempt_request(
                         client, method, url, headers, params, cookies, data
                     )
-                    # r.raise_for_status()
                     if r.status_code == 403:
-                        logger.info(
-                            "🔥 Cloudflare challenge detected, using FlareSolverr…"
-                        )
+                        async with cf_lock:
+                            cookie = settings.fetcher.cookie
+                            headers = settings.fetcher.headers
+                            cookies = {"cf_clearance": cookie} if cookie else None
 
-                        full_url = f"{base_url}{url}"
-                        solution = await solve_challenge(full_url)
+                            r = await _attempt_request(
+                                client, method, url, headers, params, cookies, data
+                            )
+                            if r.status_code != 403:
+                                return r.json()
 
-                        for c in solution["cookies"]:
-                            if c["name"] == "cf_clearance":
-                                settings.fetcher.cookie = c["value"]
+                            logger.info(
+                                "🔥 Cloudflare challenge detected, using FlareSolverr…"
+                            )
 
-                        if solution["user_agent"]:
-                            settings.fetcher.user_agent = {
-                                "User-Agent": solution["user_agent"]
-                            }
-                        continue
+                            full_url = f"{base_url}{url}"
+                            solution = await solve_challenge(full_url)
+
+                            for c in solution["cookies"]:
+                                if c["name"] == "cf_clearance":
+                                    settings.fetcher.cookie = c["value"]
+
+                            if solution["user_agent"]:
+                                settings.fetcher.user_agent = {
+                                    "User-Agent": solution["user_agent"]
+                                }
+                            continue
 
                     if r.status_code in RETRY_STATUSES:
                         raise httpx.HTTPStatusError(
@@ -96,7 +106,9 @@ async def fetch(
                 if attempt > MAX_RETRIES:
                     logger.error(f"❌ {url} failed after {MAX_RETRIES} retries ({err})")
                     raise httpx.HTTPStatusError(
-                        f"Failed after {MAX_RETRIES} retries", request=r.request, response=r
+                        f"Failed after {MAX_RETRIES} retries",
+                        request=r.request,
+                        response=r,
                     )
                 delay = BASE_DELAY * (2 ** (attempt - 1))
                 logger.warning(
