@@ -28,7 +28,7 @@ async def _attempt_request(
 
 
 # Limit concurrent HTTP requests
-http_sem = asyncio.Semaphore(3)
+http_sem = asyncio.Semaphore(5)
 cf_lock = asyncio.Lock()
 
 
