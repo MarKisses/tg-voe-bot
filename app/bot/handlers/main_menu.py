@@ -16,6 +16,8 @@ router = Router(name=__name__)
 async def start(message: Message, state: FSMContext):
     await state.clear()
     logger.info(f"User {message.from_user.id} initiated start command.")
+    
+    await message.delete()
 
     await replace_service_menu(
         bot=message.bot,
@@ -24,10 +26,12 @@ async def start(message: Message, state: FSMContext):
         reply_markup=main_menu_keyboard(),
     )
     
-@router.message(Command("info"), FromUserRequired())
+@router.message(Command("about"), FromUserRequired())
 async def info(message: Message, state: FSMContext):
     await state.clear()
     logger.info(f"User {message.from_user.id} requested info command.")
+
+    await message.delete()
 
     await show_service_menu(
         bot=message.bot,
