@@ -32,6 +32,9 @@ class UserStorage:
         return int(raw)
 
     async def get_addresses(self, user_id: int) -> list[Address]:
+        """
+        Get all addresses of the user.
+        """
         key = self._key(user_id)
 
         if inspect.isawaitable(raw_items := self.r.lrange(key, 0, -1)):
@@ -49,12 +52,15 @@ class UserStorage:
         return addresses
 
     async def add_address(self, user_id: int, address: Address) -> None:
+        """
+        Add address to the user's list. If it already exists, it will be updated.
+        """
         key = self._key(user_id)
         addr_id = address.id
 
         current = await self.get_addresses(user_id)
 
-        # убираем дубликаты
+        # Remove duplicates
         filtered = [a for a in current if a.id != addr_id]
         filtered.append(address)
 
