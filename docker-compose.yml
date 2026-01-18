@@ -14,20 +14,18 @@ services:
       - .env
     depends_on:
       - flaresolver
+      - redis
     ports:
       - "8443:8443"
 
-
-#  redis:
-#   image: "redis:alpine"
-#    container_name: tg_disconnection_bot_redis
-#    restart: unless-stopped
-#    volumes:
-#      - redis_data:/data
-#    ports:
-#      - "6379:6379"
-#    env_file:
-#      - .env
+  redis:
+    image: "redis:alpine"
+    container_name: tg_disconnection_bot_redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    env_file:
+      - .env
 
 
   flaresolver:
@@ -37,7 +35,5 @@ services:
     environment:
       - TZ=Europe/Kyiv
 
-# Порты мне не нужны, так как у меня все сервисы внутри одной Docker сети
-
-#volumes:
-#  redis_data:
+volumes:
+  redis_data:
