@@ -60,7 +60,7 @@
     - Генерація SSL сертифікату (Self-signed certificate). Детальніше [тут](https://core.telegram.org/bots/self-signed).
     - Налаштування змінних оточення:
         - BOT_MODE=webhook
-        - WEBHOOK__URL=ip_of_your_vps
+        - WEBHOOK__URL=https://ip_of_your_vps
         - WEBHOOK__PORT=8443 (телеграм підтримує лише 443, 80, 88, 8443)
         - WEBHOOK__PATH=/webhook (будь-який шлях)
         - WEBHOOK__SECRET_TOKEN=my-secret-token (секретний токен, щоб переконатися, що запити йдуть від Telegram.)
