@@ -54,7 +54,7 @@
 
 ## Використання webhook (напр. для VPS)
 
-Для використання webhook режиму є 2 варіанти:
+Для використання webhook режиму є 3 варіанти:
 
 1. Оренда VPS з білим IP (щоб Telegram міг достукатись до бота)
     - Генерація SSL сертифікату (Self-signed certificate). Детальніше [тут](https://core.telegram.org/bots/self-signed).
