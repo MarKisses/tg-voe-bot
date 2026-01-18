@@ -1,15 +1,13 @@
 from io import BytesIO
 
+from config import settings
 from PIL import Image, ImageDraw
-
 from services.models import DaySchedule
 
 from .utils.renderer_helpers import (
     TextBox,
     half_color,
 )
-
-from config import settings
 
 
 def render_schedule_image(
@@ -72,7 +70,7 @@ def render_schedule_image(
             draw.rectangle([x1, y1, x2, y2], fill=color)
             if full.confirm:
                 cell_text_fill = "white"
-                
+
         else:
             # left half
             h1 = halves[0]
@@ -84,18 +82,34 @@ def render_schedule_image(
             h2_color = half_color(h2)
             draw.rectangle([x1 + col_w / 2, y1, x2, y2], fill=h2_color)
 
+            if (h1.off and h1.confirm) and (h2.off and h2.confirm):
+                cell_text_fill = "white"
+
         cell_text = TextBox(
-            draw, (x1, y1), col_w, row_h, max_font_size=int(IMAGE_W * 0.035), fill=cell_text_fill
+            draw,
+            (x1, y1),
+            col_w,
+            row_h,
+            max_font_size=int(IMAGE_W * 0.035),
+            fill=cell_text_fill,
         )
         cell_text.draw_text(hour)
 
     for c in range(cols + 1):
         x = col_w / 2 + c * col_w
-        draw.line((x, row_h * 2, x, row_h * 2 + rows * row_h), fill=settings.renderer.color_grid, width=4)
+        draw.line(
+            (x, row_h * 2, x, row_h * 2 + rows * row_h),
+            fill=settings.renderer.color_grid,
+            width=4,
+        )
 
     for r in range(rows + 1):
         y = row_h * 2 + r * row_h
-        draw.line((col_w / 2, y, col_w / 2 + cols * col_w, y), fill=settings.renderer.color_grid, width=4)
+        draw.line(
+            (col_w / 2, y, col_w / 2 + cols * col_w, y),
+            fill=settings.renderer.color_grid,
+            width=4,
+        )
 
     # ---- Легенда ----
 
