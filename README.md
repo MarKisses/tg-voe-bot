@@ -29,7 +29,7 @@
     ```
     git clone https://github.com/MarKisses/tg-voe-bot.git
     cd tg-voe-bot
-   ```
+    ```
 
 2. Налаштувати змінні оточення
 
