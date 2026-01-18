@@ -25,13 +25,13 @@ class IsAdmin(BaseFilter):
 router = Router(name=__name__)
 
 
-@router.message(Command("/add_cookie"), IsAdmin(settings.admin_id))
-async def add_cookie(message: types.Message, state: FSMContext):
-    logger.info(f"User {message.from_user.id} initiated add_cookie command.")
+@router.message(Command("/admin"), IsAdmin(settings.admin_id))
+async def admin_command(message: types.Message, state: FSMContext):
+    logger.info(f"User {message.from_user.id} initiated admin command.")
     await tg_sem_show_service_menu(
         bot=message.bot,
         chat_id=message.chat.id,
-        text="Hello fucker :)))",
+        text="Hello admin :)))",
         reply_markup=main_menu_keyboard(),
         old_msg_id=message.message_id,
     )
