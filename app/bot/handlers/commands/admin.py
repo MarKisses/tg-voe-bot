@@ -25,8 +25,9 @@ class IsAdmin(BaseFilter):
 router = Router(name=__name__)
 
 
-@router.message(Command("/admin"), IsAdmin(settings.admin_id))
+@router.message(Command("admin"), IsAdmin(settings.admin_id))
 async def admin_command(message: types.Message, state: FSMContext):
+    await message.delete()
     logger.info(f"User {message.from_user.id} initiated admin command.")
     await tg_sem_show_service_menu(
         bot=message.bot,
