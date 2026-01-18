@@ -58,10 +58,10 @@ async def show_service_menu(
 
 
 async def replace_service_menu(
-    bot: Bot,
+    bot: Bot | None,
     chat_id: int,
     text: str,
-    reply_markup: InlineKeyboardMarkup,
+    reply_markup: InlineKeyboardMarkup | None = None,
 ) -> int:
     msg_id = await user_storage.get_service_msg(chat_id)
 

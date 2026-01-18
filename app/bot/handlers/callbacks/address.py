@@ -11,7 +11,7 @@ from bot.keyboards.address_list import (
     full_address_keyboard,
 )
 from bot.states.AddressState import AddressState
-from bot.utils import replace_service_menu, show_service_menu
+from bot.utils import tg_sem_replace_service_menu, tg_sem_show_service_menu, tg_sem_send_photo
 from config import settings
 from exceptions import VoeDownException
 from logger import create_logger
@@ -39,14 +39,14 @@ async def city_callback(callback: CallbackQuery, state: FSMContext):
         city = City(id=510100000, name="м. Вінниця")
         await state.update_data(chosen_city=city.model_dump())
         await state.set_state(AddressState.choosing_street)
-        return await show_service_menu(
+        return await tg_sem_show_service_menu(
             bot=callback.bot,
             chat_id=callback.message.chat.id,
             text="Введіть назву вулиці",
             old_msg_id=callback.message.message_id,
         )
     await state.set_state(AddressState.choosing_city)
-    return await show_service_menu(
+    return await tg_sem_show_service_menu(
         bot=callback.bot,
         chat_id=callback.message.chat.id,
         text="Введіть назву міста",
@@ -71,7 +71,7 @@ async def city_select_callback(callback: CallbackQuery, state: FSMContext):
         msg_id=callback.message.message_id, chat_id=callback.message.chat.id
     )
     if not city:
-        return await show_service_menu(
+        return await tg_sem_show_service_menu(
             bot=callback.bot,
             chat_id=callback.message.chat.id,
             text="Вибране місто не знайдено. Спробуйте ще раз.",
@@ -82,7 +82,7 @@ async def city_select_callback(callback: CallbackQuery, state: FSMContext):
     await state.update_data(
         msg_id=callback.message.message_id, chat_id=callback.message.chat.id
     )
-    return await show_service_menu(
+    return await tg_sem_show_service_menu(
         bot=callback.bot,
         chat_id=callback.message.chat.id,
         text="Введіть назву вулиці",
@@ -105,7 +105,7 @@ async def street_select_callback(callback: CallbackQuery, state: FSMContext):
         None,
     )
     if not street:
-        return await show_service_menu(
+        return await tg_sem_show_service_menu(
             bot=callback.bot,
             chat_id=callback.message.chat.id,
             text="Вибрану вулицю не знайдено. Спробуйте ще раз.",
@@ -116,7 +116,7 @@ async def street_select_callback(callback: CallbackQuery, state: FSMContext):
         msg_id=callback.message.message_id, chat_id=callback.message.chat.id
     )
     await state.set_state(AddressState.choosing_house)
-    return await show_service_menu(
+    return await tg_sem_show_service_menu(
         bot=callback.bot,
         chat_id=callback.message.chat.id,
         text="Введіть номер будинку",
@@ -139,7 +139,7 @@ async def house_select_callback(callback: CallbackQuery, state: FSMContext):
         None,
     )
     if not house:
-        return await show_service_menu(
+        return await tg_sem_show_service_menu(
             bot=callback.bot,
             chat_id=callback.message.chat.id,
             text="Вибраний будинок не знайдено. Спробуйте ще раз.",
@@ -157,7 +157,7 @@ async def house_select_callback(callback: CallbackQuery, state: FSMContext):
     await user_storage.add_address(callback.from_user.id, address)
 
     await state.clear()
-    return await show_service_menu(
+    return await tg_sem_show_service_menu(
         bot=callback.bot,
         chat_id=callback.message.chat.id,
         text=f"{address.name}",
@@ -175,14 +175,14 @@ async def address_menu_callback(callback: CallbackQuery, state: FSMContext):
     _, address_id = callback.data.split(":", 1)
     address = await user_storage.get_address_by_id(callback.from_user.id, address_id)
     if not address:
-        return await show_service_menu(
+        return await tg_sem_show_service_menu(
             bot=callback.bot,
             chat_id=callback.message.chat.id,
             text="Вибрана адреса не знайдено. Спробуйте ще раз.",
             old_msg_id=callback.message.message_id,
         )
 
-    return await show_service_menu(
+    return await tg_sem_show_service_menu(
         bot=callback.bot,
         chat_id=callback.message.chat.id,
         text=f"{address.name}",
@@ -200,7 +200,7 @@ async def select_address_callback(callback: CallbackQuery, state: FSMContext):
     _, address_id = callback.data.split(":", 1)
     address = await user_storage.get_address_by_id(callback.from_user.id, address_id)
     if not address:
-        return await show_service_menu(
+        return await tg_sem_show_service_menu(
             bot=callback.bot,
             chat_id=callback.message.chat.id,
             text="Вибрана адреса не знайдена. Спробуйте ще раз.",
@@ -210,7 +210,7 @@ async def select_address_callback(callback: CallbackQuery, state: FSMContext):
     async with ChatActionSender(
         bot=callback.bot, chat_id=callback.message.chat.id, action=ChatAction.TYPING
     ):
-        await show_service_menu(
+        await tg_sem_show_service_menu(
             bot=callback.bot,
             chat_id=callback.message.chat.id,
             text=settings.messages_loading.loading_schedule,
@@ -222,7 +222,7 @@ async def select_address_callback(callback: CallbackQuery, state: FSMContext):
                 address.city.id, address.street.id, address.house.id
             )
         except VoeDownException:
-            return await show_service_menu(
+            return await tg_sem_show_service_menu(
                 bot=callback.bot,
                 chat_id=callback.message.chat.id,
                 text="VOE впав 😢",
@@ -233,7 +233,7 @@ async def select_address_callback(callback: CallbackQuery, state: FSMContext):
         parsed = parse_schedule(raw, address.name, max_days=2)
 
         if not parsed.disconnections:
-            return await show_service_menu(
+            return await tg_sem_show_service_menu(
                 bot=callback.bot,
                 chat_id=callback.message.chat.id,
                 text=f"Графік відключень для {address.name} відсутній.",
@@ -243,7 +243,7 @@ async def select_address_callback(callback: CallbackQuery, state: FSMContext):
 
     await user_storage.set_cached_schedule(address.id, parsed.model_dump(), ttl=600)
 
-    await show_service_menu(
+    await tg_sem_show_service_menu(
         bot=callback.bot,
         chat_id=callback.message.chat.id,
         text=f"{address.name}",
@@ -266,7 +266,7 @@ async def day_select_callback(callback: CallbackQuery, state: FSMContext):
     schedule_data = await user_storage.get_cached_schedule(addr_id)
 
     if not schedule_data:
-        return await show_service_menu(
+        return await tg_sem_show_service_menu(
             bot=callback.bot,
             chat_id=callback.message.chat.id,
             text="Графік відключень не знайдено в кеші. Будь ласка, завантажте його знову.",
@@ -279,7 +279,7 @@ async def day_select_callback(callback: CallbackQuery, state: FSMContext):
     async with ChatActionSender(
         bot=callback.bot, chat_id=callback.message.chat.id, action=ChatAction.TYPING
     ):
-        await show_service_menu(
+        await tg_sem_show_service_menu(
             bot=callback.bot,
             chat_id=callback.message.chat.id,
             text=settings.messages_loading.loading_schedule,
@@ -287,17 +287,18 @@ async def day_select_callback(callback: CallbackQuery, state: FSMContext):
         )
 
         logger.debug(schedule)
+        day = schedule.get_day_schedule(date)
 
-        if not schedule.get_day_schedule(date):
-            return await show_service_menu(
+        if not day:
+            return await tg_sem_show_service_menu(
                 bot=callback.bot,
                 chat_id=callback.message.chat.id,
                 text=f"На цей день графік відключень для {schedule.address} поки недоступний.",
                 reply_markup=day_list_keyboard(addr_id),
             )
 
-        if not schedule.get_day_schedule(date).has_disconnections:
-            return await show_service_menu(
+        if not day.has_disconnections:
+            return await tg_sem_show_service_menu(
                 bot=callback.bot,
                 chat_id=callback.message.chat.id,
                 text=f"Відключень для {schedule.address} на цей день немає.",
@@ -306,7 +307,7 @@ async def day_select_callback(callback: CallbackQuery, state: FSMContext):
 
         buffered_file = BufferedInputFile(
             render_schedule_image(
-                day=schedule.get_day_schedule(date),
+                day=day,
                 queue=schedule.disconnection_queue,
                 date=date,
                 address=schedule.address,
@@ -314,11 +315,13 @@ async def day_select_callback(callback: CallbackQuery, state: FSMContext):
             filename="schedule.png",
         )
 
-        await callback.message.answer_photo(
+        await tg_sem_send_photo(
+            bot=callback.bot,
+            chat_id=callback.message.chat.id,
             photo=buffered_file,
         )
 
-        return await replace_service_menu(
+        return await tg_sem_replace_service_menu(
             bot=callback.bot,
             chat_id=callback.message.chat.id,
             text=f"{schedule.address}",
@@ -337,7 +340,7 @@ async def delete_address_callback(callback: CallbackQuery, state: FSMContext):
     _, address_id = callback.data.split(":", 1)
     address = await user_storage.get_address_by_id(callback.from_user.id, address_id)
     if not address:
-        return show_service_menu(
+        return await tg_sem_show_service_menu(
             bot=callback.bot,
             chat_id=callback.message.chat.id,
             text="Вибрана адреса не знайдена. Спробуйте ще раз.",
@@ -354,7 +357,7 @@ async def delete_address_callback(callback: CallbackQuery, state: FSMContext):
 
     addresses = await user_storage.get_addresses(callback.from_user.id)
     if not addresses:
-        return await show_service_menu(
+        return await tg_sem_show_service_menu(
             bot=callback.bot,
             chat_id=callback.message.chat.id,
             text="У вас немає збережених адрес.",
@@ -362,7 +365,7 @@ async def delete_address_callback(callback: CallbackQuery, state: FSMContext):
             old_msg_id=callback.message.message_id,
         )
 
-    return await show_service_menu(
+    return await tg_sem_show_service_menu(
         bot=callback.bot,
         chat_id=callback.message.chat.id,
         text="Список ваших адрес:",

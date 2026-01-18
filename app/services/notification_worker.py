@@ -5,7 +5,7 @@ from typing import Literal
 from aiogram import Bot
 from aiogram.types.input_file import BufferedInputFile
 from bot.keyboards.main_menu import main_menu_keyboard
-from bot.utils import replace_service_menu
+from bot.utils import tg_sem_send_photo, tg_sem_replace_service_menu
 from exceptions import VoeDownException
 from logger import create_logger
 from services.fetcher import fetch_schedule
@@ -14,9 +14,9 @@ from services.parser import parse_schedule
 from services.renderer import render_schedule_image
 from storage import subscription_storage, user_storage
 
-SubscriptionKinds = Literal["today", "tomorrow"]
-
 logger = create_logger(__name__)
+
+SubscriptionKinds = Literal["today", "tomorrow"]
 
 
 def _calc_hash(obj: dict) -> str:
@@ -38,7 +38,7 @@ async def _update_hashes_for_address(
     today_date = datetime.now().date().isoformat()
     tomorrow_date = (datetime.now() + timedelta(days=1)).date().isoformat()
 
-    changed = set()
+    changed: set[SubscriptionKinds] = set()
 
     today_old = await subscription_storage.get_last_hash(addr_id, "today")
     tomorrow_old = await subscription_storage.get_last_hash(addr_id, "tomorrow")
@@ -68,12 +68,7 @@ async def _update_hashes_for_address(
             changed.add("tomorrow")
 
     # Avoid notifying both today and tomorrow if they are identical
-    if (
-        "today" in changed
-        and today
-        and tomorrow_old
-        and _calc_hash(today.model_dump()) == tomorrow_old
-    ):
+    if "today" in changed and today and tomorrow_old and today_hash == tomorrow_old:
         changed.remove("today")
     return changed
 
@@ -83,7 +78,7 @@ async def _process_for_address(
     addr_id: str,
     subscribers_today: set[int],
     subscribers_tomorrow: set[int],
-) -> set[str]:
+) -> set[int]:
     """
     Process schedule for a specific address.
     Send notifications to subscribers if there are changes.
@@ -93,6 +88,7 @@ async def _process_for_address(
 
     city_id, street_id, house_id = map(int, addr_id.split("-"))
     processed_users = set()
+    tasks = []
 
     try:
         raw = await fetch_schedule(city_id, street_id, house_id)
@@ -134,19 +130,22 @@ async def _process_for_address(
             logger.warning(f"No schedule for today for {addr_id}")
             return processed_users
 
-        buffered_file = BufferedInputFile(
-            render_schedule_image(
-                day=day_schedule,
-                queue=schedule.disconnection_queue,
-                date=today,
-                address=schedule.address,
-            ).getvalue(),
-            filename="schedule.png",
-        )
-
+        image_bytes = render_schedule_image(
+            day=day_schedule,
+            queue=schedule.disconnection_queue,
+            date=today,
+            address=schedule.address,
+        ).getvalue()
+        tasks = []
         for uid in subscribers_today:
-            await bot.send_photo(
-                uid, photo=buffered_file, caption=msg, show_caption_above_media=True
+            tasks.append(
+                tg_sem_send_photo(
+                    bot,
+                    chat_id=uid,
+                    photo=BufferedInputFile(image_bytes, filename="schedule.png"),
+                    caption=msg,
+                    show_caption_above_media=True,
+                )
             )
             processed_users.add(uid)
             logger.info(
@@ -160,34 +159,39 @@ async def _process_for_address(
             logger.warning(f"No schedule for tomorrow for {addr_id}")
             return processed_users
 
-        buffered_file = BufferedInputFile(
-            render_schedule_image(
-                day=day_schedule,
-                queue=schedule.disconnection_queue,
-                date=tomorrow,
-                address=schedule.address,
-            ).getvalue(),
-            filename="schedule.png",
-        )
-
+        image_bytes = render_schedule_image(
+            day=day_schedule,
+            queue=schedule.disconnection_queue,
+            date=tomorrow,
+            address=schedule.address,
+        ).getvalue()
+        tasks = []
         for uid in subscribers_tomorrow:
-            await bot.send_photo(
-                uid, photo=buffered_file, caption=msg, show_caption_above_media=True
+            tasks.append(
+                tg_sem_send_photo(
+                    bot,
+                    chat_id=uid,
+                    photo=BufferedInputFile(image_bytes, filename="schedule.png"),
+                    caption=msg,
+                    show_caption_above_media=True,
+                )
             )
             processed_users.add(uid)
             logger.info(
                 f"Sent notification to user {uid} for address {addr_id} tomorrow ({schedule.address})"
             )
+    if tasks:
+        await asyncio.gather(*tasks, return_exceptions=True)
     return processed_users
 
 
-async def _process_address_safe(bot, addr_id: str):
+async def _process_address_safe(bot, addr_id: str) -> set[int]:
     """Wrapper to process address and catch exceptions."""
     subs_today = await subscription_storage.get_subscribers(addr_id, "today")
     subs_tomorrow = await subscription_storage.get_subscribers(addr_id, "tomorrow")
 
     if not subs_today and not subs_tomorrow:
-        return
+        return set()
 
     return await _process_for_address(bot, addr_id, subs_today, subs_tomorrow)
 
@@ -196,22 +200,34 @@ async def notification_worker(bot: Bot, interval_seconds: int = 900) -> None:
     while True:
         try:
             addr_ids = await subscription_storage.get_all_addresses()
-            tasks = []
-            for addr_id in addr_ids:
-                tasks.append(_process_address_safe(bot, addr_id=addr_id))
 
             # List of sets of processed users
-            result_list = await asyncio.gather(*tasks)
-            processed_users = set().union(*result_list)
+            tasks = [
+                _process_address_safe(bot, addr_id=addr_id) for addr_id in addr_ids
+            ]
+            result_list_raw = await asyncio.gather(*tasks, return_exceptions=True)
+            exceptions = [res for res in result_list_raw if isinstance(res, Exception)]
+            for e in exceptions:
+                logger.error("Error during processing address: %s", e)
+
+            result_list = [res for res in result_list_raw if isinstance(res, set)]
+            processed_users: set[int] = set().union(*result_list)
 
             # Finally, update service menus for all processed users once
-            for uid in processed_users:
-                await replace_service_menu(
+            messages_tasks = [
+                tg_sem_replace_service_menu(
                     bot=bot,
                     chat_id=uid,
                     text="Головне меню",
                     reply_markup=main_menu_keyboard(),
                 )
+                for uid in processed_users
+            ]
+            await asyncio.gather(*messages_tasks, return_exceptions=True)
+            exceptions = [res for res in messages_tasks if isinstance(res, Exception)]
+            for e in exceptions:
+                logger.error("Error during updating service menu: %s", e)
+
             logger.info(
                 f"Notification worker tick completed. Processed {len(processed_users)} users."
             )

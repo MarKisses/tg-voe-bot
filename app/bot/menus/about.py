@@ -1,6 +1,6 @@
 from aiogram.types import CallbackQuery
 from bot.keyboards.main_menu import back_to_main_menu_keyboard
-from bot.utils import show_service_menu
+from bot.utils import tg_sem_show_service_menu
 
 text = """
 Цей бот допомагає:
@@ -29,7 +29,7 @@ P.s.s.s. Зробіть публічне API для VOE, будь ласка :)
 
 
 async def show_info(source: CallbackQuery):
-    return await show_service_menu(
+    return await tg_sem_show_service_menu(
         bot=source.bot,
         chat_id=source.message.chat.id,
         text=text,
