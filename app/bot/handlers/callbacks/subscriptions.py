@@ -6,7 +6,7 @@ from aiogram.types import CallbackQuery, InaccessibleMessage
 from storage import subscription_storage, user_storage
 
 from bot.keyboards.subcriptions import build_subscription_menu
-from bot.utils.message_editor import show_service_menu
+from bot.utils import tg_sem_show_service_menu
 
 logger = getLogger(__name__)
 
@@ -29,7 +29,7 @@ async def subscriptions_callback(callback: CallbackQuery, state: FSMContext):
     data = await subscription_storage.get_subscription_status(user_id, addr_id)
 
     if not address:
-        await show_service_menu(
+        await tg_sem_show_service_menu(
             bot=callback.bot,
             chat_id=callback.from_user.id,
             text="Вибрана адреса не знайдена. Спробуйте ще раз.",
@@ -37,7 +37,7 @@ async def subscriptions_callback(callback: CallbackQuery, state: FSMContext):
         )
         return
 
-    await show_service_menu(
+    await tg_sem_show_service_menu(
         bot=callback.bot,
         chat_id=callback.from_user.id,
         text=f"{address.name}",

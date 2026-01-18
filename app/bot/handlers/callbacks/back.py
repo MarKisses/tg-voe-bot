@@ -3,7 +3,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 from bot.keyboards.main_menu import main_menu_keyboard
 from bot.menus.address_list import show_address_list
-from bot.utils import show_service_menu
+from bot.utils import tg_sem_show_service_menu
 
 router = Router(name=__name__)
 
@@ -16,7 +16,7 @@ async def back_callback(callback: CallbackQuery, state: FSMContext):
     _, action = callback.data.split(":", 1)
 
     if action == "main_menu":
-        await show_service_menu(
+        await tg_sem_show_service_menu(
             bot=callback.bot,
             chat_id=callback.message.chat.id,
             text="Головне меню бота:",

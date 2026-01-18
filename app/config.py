@@ -47,7 +47,7 @@ class Webhook(BaseSettings):
     path: str = "/webhook"
     secret_token: str | None = None
     port: int = 8443
-    
+
     ssl_cert_path: str = "opt/telegram-cert/cert.pem"
     ssl_key_path: str = "opt/telegram-cert/key.pem"
 
@@ -55,14 +55,15 @@ class Webhook(BaseSettings):
     @property
     def full_url(self) -> str:
         return f"{self.url}:{self.port}{self.path}"
-    
+
+
 class Messages_Loading(BaseSettings):
     loading_city: str = "Завантаження міст..."
     loading_street: str = "Завантаження вулиць..."
     loading_house: str = "Завантаження будинків..."
-    
+
     loading_schedule: str = "Завантаження графіка відключень..."
-    
+
 
 class Renderer(BaseSettings):
     color_header: tuple[int, int, int] = (63, 111, 134)
@@ -74,6 +75,7 @@ class Renderer(BaseSettings):
 
     base_font_path: str = "app/services/utils/fonts/arial.ttf"
 
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         case_sensitive=False,
@@ -82,6 +84,7 @@ class Settings(BaseSettings):
 
     bot_token: str | None = None
     bot_mode: Literal["polling", "webhook"] = "polling"
+    rate_limit_sem: int = 20  # Max concurrent messages to send
 
     admin_id: int | None = None
 
@@ -92,5 +95,6 @@ class Settings(BaseSettings):
     webhook: Webhook = Webhook()
     messages_loading: Messages_Loading = Messages_Loading()
     renderer: Renderer = Renderer()
+
 
 settings = Settings()
