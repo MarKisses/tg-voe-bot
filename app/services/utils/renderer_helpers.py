@@ -5,7 +5,13 @@ from services.models import FullCell, HalfCell
 from config import settings
 
 
-def half_color(h: HalfCell | FullCell):
+def half_color(h: HalfCell | FullCell) -> tuple[int, int, int]:
+    """
+    Determine the color for a half cell based on its status.
+    1. If the half cell is marked as 'off' and confirmed, return the 'off' color.
+    2. If the half cell is marked as 'off' but not confirmed, return the 'possible' color.
+    3. If neither condition is met, return the 'ok' color.
+    """
     if h.off and h.confirm is True:
         return settings.renderer.color_off
     if h.off and h.confirm is False:
