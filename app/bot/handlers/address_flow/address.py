@@ -102,7 +102,7 @@ async def choose_street_handler(message: Message, state: FSMContext):
         await tg_sem_show_service_menu(
             bot=message.bot,
             chat_id=message.chat.id,
-            text="Вулицю не знайдено. Спробуйте ще раз.\n"
+            text="Вулицю не знайдено. <i>Напишіть ще раз назву вулиці</i>.\n"
             "Введіть виключно назву вулиці без номеру будинку.\n"
             "Перевірте чи існує така вулиця в базі VOE.",
             old_msg_id=msg_id,
@@ -165,7 +165,7 @@ async def choose_house_handler(message: Message, state: FSMContext):
         return await tg_sem_show_service_menu(
             bot=message.bot,
             chat_id=message.chat.id,
-            text="Будинок не знайдено. Спробуйте ще раз.\n"
+            text="Будинок не знайдено. <i>Напишіть ще раз номер будинку<i>.\n"
             "Перевірте чи існує такий номер будинку в базі VOE.",
             old_msg_id=msg_id,
             reply_markup=back_to_main_menu_keyboard(),

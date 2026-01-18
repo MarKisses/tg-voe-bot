@@ -34,6 +34,7 @@ async def show_service_menu(
             message_id=int(msg_id),
             text=text,
             reply_markup=reply_markup,
+            parse_mode="HTML",
         )
         return True
     except TelegramBadRequest as e:
@@ -83,6 +84,7 @@ async def replace_service_menu(
         text=text,
         reply_markup=reply_markup,
         disable_notification=True,
+        parse_mode="HTML",
     )
     await user_storage.set_service_msg(chat_id, msg.message_id)
     return msg.message_id

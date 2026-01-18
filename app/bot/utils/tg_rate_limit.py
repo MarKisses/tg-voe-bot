@@ -20,6 +20,7 @@ async def tg_sem_show_service_menu(
     text: str,
     reply_markup: InlineKeyboardMarkup | None = None,
     old_msg_id: int | None = None,
+    **kwargs
 ):
     async with TG_SEMAPHORE:
         return await show_service_menu(
@@ -28,6 +29,7 @@ async def tg_sem_show_service_menu(
             text=text,
             reply_markup=reply_markup,
             old_msg_id=old_msg_id,
+            **kwargs,
         )
 
 
@@ -36,6 +38,7 @@ async def tg_sem_replace_service_menu(
     chat_id: int,
     text: str,
     reply_markup: InlineKeyboardMarkup | None = None,
+    **kwargs
 ):
     async with TG_SEMAPHORE:
         return await replace_service_menu(
@@ -43,4 +46,5 @@ async def tg_sem_replace_service_menu(
             chat_id=chat_id,
             text=text,
             reply_markup=reply_markup,
+            **kwargs,
         )
