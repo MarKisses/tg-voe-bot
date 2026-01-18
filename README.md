@@ -4,6 +4,8 @@
 
 Цей бот збирає та парсить графіки відключень з сайту VOE (voe.com.ua/disconnection/detailed), рендерить їх у вигляді зображень і надсилає користувачам Telegram. Підтримуються підписки на зміни графіків на сьогодні та на завтра.
 
+Бот: @tg_voe_bot
+
 Ключові можливості
 
 - Пошук адрес (місто, вулиця, будинок)
@@ -20,58 +22,85 @@
 - Pillow (рендер зображень)
 - FlareSolverr (для обходу Cloudflare)
 
-## Швидкий старт Docker
+## Швидкий старт через docker-compose
 
 1. Клонувати репозиторій
 
-   git clone <repo>
-   cd new-voe-bot
+    ```
+    git clone https://github.com/MarKisses/tg-voe-bot.git
+    cd tg-voe-bot
+    ```
 
 2. Налаштувати змінні оточення
 
 Помістіть копію .env у кореневу папку або налаштуйте змінні в оточенні. Основні змінні:
 
 - BOT_TOKEN — токен Telegram бота
-- BOT_MODE — polling або webhook
-- ADMIN_ID — id адміністратора (опціонально)
-- REDIS**HOST, REDIS**PORT, REDIS**DB, REDIS**USERNAME, REDIS\_\_PASSWORD
-- FLARE**OPERATING_MODE, FLARE**SESSION, FLARE\_\_URL (для FlareSolverr)
-- FETCHER\_\_BASE_URL — базовий URL для перегляду графіків
-- NOTIFICATION\_\_INTERVAL — інтервал перевірки змін у секундах (за замовчуванням 900)
-- WEBHOOK**URL, WEBHOOK**PORT, WEBHOOK**PATH, WEBHOOK**SECRET_TOKEN, WEBHOOK\_\_SSL_CERT/KEY
+- BOT_MODE — polling або webhook (polling локально, webhook для VPS/хостингу)
+- ADMIN_ID — id адміністратора (поки немає функціоналу)
+- REDIS - налаштування підключення до Redis
+- FLARE - налаштування FlareSolverr
+    - FLARE__OPERATING_MODE — cookie або proxy (використовувати як cookie-getter або проксі)
+    - FLARE__SESSION — назва сесії (якщо proxy режим, щоб всі запити йшли через одну сесію)
+    - FLARE__URL - URL FlareSolverr (за замовчуванням http://flaresolverr:8191)
+- NOTIFICATION__INTERVAL — інтервал перевірки змін у секундах (за замовчуванням 900 - 15 хв)
 
-4. Запуск локально (polling)
 
-   cd app
-   python main.py
+3. Запуск long-polling бота
 
-При webhook режимі потрібно забезпечити дійсний SSL сертифікат та коректні змінні для webhook.
-
-## Docker
-
-В проєкті є docker-compose з сервісом flaresolver (якщо потрібно). Щоб підняти контейнер бота через Compose, налаштуйте .env і запустіть:
-
+    ```
     docker-compose up --build
+    ```
+
+## Використання webhook (напр. для VPS)
+
+Для використання webhook режиму є 3 варіанти:
+
+1. Оренда VPS з білим IP (щоб Telegram міг достукатись до бота)
+    - Генерація SSL сертифікату (Self-signed certificate). Детальніше [тут](https://core.telegram.org/bots/self-signed).
+    - Налаштування змінних оточення:
+        - BOT_MODE=webhook
+        - WEBHOOK__URL=https://ip_of_your_vps
+        - WEBHOOK__PORT=8443 (телеграм підтримує лише 443, 80, 88, 8443)
+        - WEBHOOK__PATH=/webhook (будь-який шлях)
+        - WEBHOOK__SECRET_TOKEN=my-secret-token (секретний токен, щоб переконатися, що запити йдуть від Telegram.)
+        - WEBHOOK__SSL_CERT_PATH=шлях_до_сертифікату.pem
+        - WEBHOOK__SSL_KEY_PATH=шлях_до_ключа.pem
+    - Запуск бота через docker-compose
+    ```
+    docker-compose up --build
+    ```
+
+2. Використання reverse proxy (nginx, cloudflare tunnel тощо)
+    - В розробці
+
+3. Ngrok
+    - В розробці
+
 
 ## Пояснення компонентів
 
-- app/services/fetcher.py — робить HTTP-запити до VOE (через FlareSolverr або проксі)
-- app/services/parser.py — парсить HTML і будує модель графіку
-- app/services/renderer.py — генерує PNG з графіком
-- app/services/notification_worker.py — періодично перевіряє адреси й надсилає повідомлення підписникам
-- app/storage — зберігання у Redis (addresses, subscriptions, кеш графіків)
 - app/bot — логіка aiogram: handlers, menus, keyboards
+- app/storage — зберігання у Redis (addresses, subscriptions, кеш графіків)
+- app/services/fetcher.py — фетчер до ендпоінтів VOE (з fallback на FlareSolverr)
+- app/services/parser.py — парсер.
+- app/services/renderer.py — PIL рендеринг графіків у PNG.
+- app/services/notification_worker.py — перевірка змін графіків та надсилання нотифікацій.
 
 ## Підписки та нотифікації
 
 - Користувач може підписатися на зміни на сьогодні або на завтра для будь-якої збереженої адреси.
-- Сервер періодично (NOTIFICATION\_\_INTERVAL) перевіряє оновлення та надсилає повідомлення тим, у кого змінився хеш графіка.
+- Сервер періодично (15 хв.) перевіряє оновлення та надсилає повідомлення тим, у кого змінився хеш графіка.
 
 ## Тестовий mock endpoint
-
 У репозиторії є мок-сервер для локальної розробки (mock_endpoint). Запустіть його, якщо хочете тестувати без доступу до реального VOE:
 
-    python mock_endpoint/main.py
+```
+cd mock_endpoint
+python main.py
+```
+
+Поки в розробці, як і написання повноцінних тестів.
 
 ## Логи та налагодження
 
