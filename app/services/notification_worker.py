@@ -6,6 +6,7 @@ from aiogram import Bot
 from aiogram.types.input_file import BufferedInputFile
 from bot.keyboards.main_menu import main_menu_keyboard
 from bot.utils import replace_service_menu
+from exceptions import VoeDownException
 from logger import create_logger
 from services.fetcher import fetch_schedule
 from services.models import ScheduleResponse
@@ -27,73 +28,97 @@ def _calc_hash(obj: dict) -> str:
     return hashlib.sha256(obj_str.encode("utf-8")).hexdigest()
 
 
-async def _update_hashes_for_address(addr_id: str, schedule: ScheduleResponse):
+async def _update_hashes_for_address(
+    addr_id: str, schedule: ScheduleResponse
+) -> set[SubscriptionKinds]:
+    """
+    Update stored hashes for today's and tomorrow's schedules.
+    Return a list of kinds ('today', 'tomorrow') that have changed.
+    """
     today_date = datetime.now().date().isoformat()
     tomorrow_date = (datetime.now() + timedelta(days=1)).date().isoformat()
 
-    changed = []
+    changed = set()
 
     today_old = await subscription_storage.get_last_hash(addr_id, "today")
     tomorrow_old = await subscription_storage.get_last_hash(addr_id, "tomorrow")
 
     today_hash, tomorrow_hash = None, None
 
-    if today_old is not None:
-        today_old = today_old
-    if tomorrow_old is not None:
-        tomorrow_old = tomorrow_old
-
-    # today
-    if today := schedule.get_day_schedule(today_date):
-        today_data = today.model_dump()
-        today_hash = _calc_hash(today_data)
+    # --- TODAY ---
+    today = schedule.get_day_schedule(today_date)
+    if today:
+        today_hash = _calc_hash(today.model_dump())
 
         # If user just added subscription, do not send notification immediately
         if today_old is None:
             await subscription_storage.set_last_hash(addr_id, "today", today_hash)
         elif today_hash != today_old:
             await subscription_storage.set_last_hash(addr_id, "today", today_hash)
-            changed.append("today")
+            changed.add("today")
 
-    # tomorrow
-    if tomorrow := schedule.get_day_schedule(tomorrow_date):
-        tomorrow_data = tomorrow.model_dump()
-        tomorrow_hash = _calc_hash(tomorrow_data)
+    # --- TOMORROW ---
+    tomorrow = schedule.get_day_schedule(tomorrow_date)
+    if tomorrow:
+        tomorrow_hash = _calc_hash(tomorrow.model_dump())
 
         # On contrary, for tomorrow we always notify on first fetch
         if tomorrow_hash != tomorrow_old and tomorrow.has_disconnections:
             await subscription_storage.set_last_hash(addr_id, "tomorrow", tomorrow_hash)
-            changed.append("tomorrow")
+            changed.add("tomorrow")
 
-    # When new today is same as old tomorrow, we consider that there is no change in today
-    if today_hash and tomorrow_old:
-        if today_hash == tomorrow_old and "today" in changed:
-            changed.remove("today")
+    # Avoid notifying both today and tomorrow if they are identical
+    if (
+        "today" in changed
+        and today
+        and tomorrow_old
+        and _calc_hash(today.model_dump()) == tomorrow_old
+    ):
+        changed.remove("today")
     return changed
 
 
 async def _process_for_address(
     bot: Bot,
     addr_id: str,
-    subscribers_today: list[int],
-    subscribers_tomorrow: list[int],
+    subscribers_today: set[int],
+    subscribers_tomorrow: set[int],
 ) -> set[str]:
+    """
+    Process schedule for a specific address.
+    Send notifications to subscribers if there are changes.
+    Distinguish between 'today' and 'tomorrow' subscriptions.
+    Return a set of user IDs who were notified.
+    """
+
     city_id, street_id, house_id = map(int, addr_id.split("-"))
     processed_users = set()
 
-    raw = await fetch_schedule(city_id, street_id, house_id)
+    try:
+        raw = await fetch_schedule(city_id, street_id, house_id)
+    except VoeDownException:
+        logger.error(f"VOE is down, cannot fetch schedule for address {addr_id}")
+        return set()
+
     if not raw:
         logger.critical("Can't get info from VOE site")
         return set()
 
+    # Need to get full address info for message and rendering
+    # TODO: refactor this adding separate method to get address info only
     address = await user_storage.get_address_by_id(
-        subscribers_today[0] if subscribers_today else subscribers_tomorrow[0], addr_id
+        (
+            next(iter(subscribers_today))
+            if subscribers_today
+            else next(iter(subscribers_tomorrow))
+        ),
+        addr_id,
     )
     if not address:
         logger.critical(f"Address {addr_id} not found in user storage")
         return set()
-    schedule = parse_schedule(raw, address.name, max_days=2)
 
+    schedule = parse_schedule(raw, address.name, max_days=2)
     if not schedule.disconnections:
         logger.warning(f"No disconnections for {addr_id} for 2 days")
         return set()
@@ -102,14 +127,13 @@ async def _process_for_address(
 
     today = datetime.now().date().isoformat()
     tomorrow = (datetime.now() + timedelta(days=1)).date().isoformat()
-
-    # 4) sending messages
     if "today" in changed:
         msg = f"⚡ Оновлено графік відключень на сьогодні за адресою {address.name}."
         day_schedule = schedule.get_day_schedule(today)
         if not day_schedule:
             logger.warning(f"No schedule for today for {addr_id}")
             return processed_users
+
         buffered_file = BufferedInputFile(
             render_schedule_image(
                 day=day_schedule,
@@ -119,6 +143,7 @@ async def _process_for_address(
             ).getvalue(),
             filename="schedule.png",
         )
+
         for uid in subscribers_today:
             await bot.send_photo(
                 uid, photo=buffered_file, caption=msg, show_caption_above_media=True
@@ -134,6 +159,7 @@ async def _process_for_address(
         if not day_schedule:
             logger.warning(f"No schedule for tomorrow for {addr_id}")
             return processed_users
+
         buffered_file = BufferedInputFile(
             render_schedule_image(
                 day=day_schedule,
@@ -143,6 +169,7 @@ async def _process_for_address(
             ).getvalue(),
             filename="schedule.png",
         )
+
         for uid in subscribers_tomorrow:
             await bot.send_photo(
                 uid, photo=buffered_file, caption=msg, show_caption_above_media=True
@@ -155,6 +182,7 @@ async def _process_for_address(
 
 
 async def _process_address_safe(bot, addr_id: str):
+    """Wrapper to process address and catch exceptions."""
     subs_today = await subscription_storage.get_subscribers(addr_id, "today")
     subs_tomorrow = await subscription_storage.get_subscribers(addr_id, "tomorrow")
 
