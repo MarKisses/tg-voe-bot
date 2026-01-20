@@ -11,8 +11,8 @@ from .utils.parser_helpers import (
     _has_disconnection,
     _has_full_disconnection,
     _inc_time,
+    _parse_css_var,
     _parse_day_label,
-    _parse_css_var
 )
 
 logger = create_logger(__name__)
@@ -92,7 +92,9 @@ def parse_schedule(html: str, address_name: str, max_days: int = 2) -> ScheduleR
             confirm_disconnection = _confirm_from_classes(cell_classes)
 
             # TODO halves. НАДО ПРИЧЕСАТЬ!
-            fill_el = cell.xpath(".//div[contains(concat(' ', normalize-space(@class), ' '), ' fill ')]")
+            fill_el = cell.xpath(
+                ".//div[contains(concat(' ', normalize-space(@class), ' '), ' fill ')]"
+            )
 
             fill_el = fill_el[0] if fill_el else None
 
@@ -159,7 +161,7 @@ def parse_schedule(html: str, address_name: str, max_days: int = 2) -> ScheduleR
                         confirm=confirmed if right_off else None,
                     ),
                 ]
-                
+
             else:
                 halves = [
                     HalfCell(
@@ -176,13 +178,13 @@ def parse_schedule(html: str, address_name: str, max_days: int = 2) -> ScheduleR
                     ),
                 ]
 
-            inferred_full_off = bool(full_off or (halves[0].off and halves[1].off))
-
             day_rows.append(
                 HourCell(
                     hour=hour_str,
-                    full=FullCell(off=bool(full_off), confirm=confirm_disconnection),
-                    inferred_full_off=inferred_full_off,
+                    full=FullCell(
+                        off=bool(full_off or (halves[0].off and halves[1].off)),
+                        confirm=confirm_disconnection,
+                    ),
                     halves=halves,
                 )
             )
