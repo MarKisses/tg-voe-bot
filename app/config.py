@@ -31,6 +31,7 @@ class Flare(BaseSettings):
 
 
 class Notification(BaseSettings):
+    silent_hash_recalculation: bool = False
     interval: int = 900
 
 
