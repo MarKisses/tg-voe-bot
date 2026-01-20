@@ -186,11 +186,7 @@ def parse_schedule(html: str, address_name: str, max_days: int = 2) -> ScheduleR
             if not full_off and halves[0].off and halves[1].off:
                 # Both halves are off in partially_off case
                 # Use halves' confirmation status for consistency
-                if halves[0].confirm == halves[1].confirm:
-                    full_confirm = halves[0].confirm
-                else:
-                    # If halves have different confirmation status, default to the first half
-                    full_confirm = halves[0].confirm
+                full_confirm = halves[0].confirm
             
             day_rows.append(
                 HourCell(
