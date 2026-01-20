@@ -178,12 +178,26 @@ def parse_schedule(html: str, address_name: str, max_days: int = 2) -> ScheduleR
                     ),
                 ]
 
+            # Determine full.confirm based on context:
+            # - If full_off, use confirm_disconnection from cell classes
+            # - If both halves are off (partially_off case), use halves' confirmation status
+            # - Otherwise, use confirm_disconnection as default
+            full_confirm = confirm_disconnection
+            if not full_off and halves[0].off and halves[1].off:
+                # Both halves are off in partially_off case
+                # Use halves' confirmation status for consistency
+                if halves[0].confirm == halves[1].confirm:
+                    full_confirm = halves[0].confirm
+                else:
+                    # If halves have different confirmation status, default to the first half
+                    full_confirm = halves[0].confirm
+            
             day_rows.append(
                 HourCell(
                     hour=hour_str,
                     full=FullCell(
                         off=bool(full_off or (halves[0].off and halves[1].off)),
-                        confirm=confirm_disconnection,
+                        confirm=full_confirm,
                     ),
                     halves=halves,
                 )
