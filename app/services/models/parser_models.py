@@ -18,7 +18,6 @@ class FullCell(BaseModel):
 class HourCell(BaseModel):
     hour: str
     full: FullCell
-    inferred_full_off: bool
     halves: List[HalfCell]
 
 
