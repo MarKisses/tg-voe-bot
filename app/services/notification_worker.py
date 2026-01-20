@@ -13,6 +13,7 @@ from services.models import ScheduleResponse
 from services.parser import parse_schedule
 from services.renderer import render_schedule_image
 from storage import subscription_storage, user_storage
+from config import settings
 
 logger = create_logger(__name__)
 
@@ -70,6 +71,9 @@ async def _update_hashes_for_address(
     # Avoid notifying both today and tomorrow if they are identical
     if "today" in changed and today and tomorrow_old and today_hash == tomorrow_old:
         changed.remove("today")
+        
+    if settings.notification.silent_hash_recalculation:
+        changed.clear()
     return changed
 
 
@@ -231,6 +235,11 @@ async def notification_worker(bot: Bot, interval_seconds: int = 900) -> None:
             logger.info(
                 f"Notification worker tick completed. Processed {len(processed_users)} users."
             )
+            
+            if settings.notification.silent_hash_recalculation:
+                logger.info("Silent hash recalculation mode is ON. No notifications were sent.")
+                settings.notification.silent_hash_recalculation = False
+                logger.info("Silent hash recalculation mode is now OFF.")
 
         except Exception as e:
             logger.exception("Notification worker tick failed %s", e)
