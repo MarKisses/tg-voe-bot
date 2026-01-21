@@ -57,6 +57,8 @@ async def _update_hashes_for_address(
         elif today_hash != today_old:
             await subscription_storage.set_last_hash(addr_id, "today", today_hash)
             changed.add("today")
+            
+        logger.debug(f"Today hash: {today_hash}, old: {today_old}")
 
     # --- TOMORROW ---
     tomorrow = schedule.get_day_schedule(tomorrow_date)
@@ -67,6 +69,8 @@ async def _update_hashes_for_address(
         if tomorrow_hash != tomorrow_old and tomorrow.has_disconnections:
             await subscription_storage.set_last_hash(addr_id, "tomorrow", tomorrow_hash)
             changed.add("tomorrow")
+            
+        logger.debug(f"Tomorrow hash: {tomorrow_hash}, old: {tomorrow_old}")
 
     # Avoid notifying both today and tomorrow if they are identical
     if "today" in changed and today and tomorrow_old and today_hash == tomorrow_old:
