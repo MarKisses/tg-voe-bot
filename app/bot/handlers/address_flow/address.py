@@ -165,7 +165,7 @@ async def choose_house_handler(message: Message, state: FSMContext):
         return await tg_sem_show_service_menu(
             bot=message.bot,
             chat_id=message.chat.id,
-            text="Будинок не знайдено. <i>Напишіть ще раз номер будинку<i>.\n"
+            text="Будинок не знайдено. <i>Напишіть ще раз номер будинку</i>.\n"
             "Перевірте чи існує такий номер будинку в базі VOE.",
             old_msg_id=msg_id,
             reply_markup=back_to_main_menu_keyboard(),
