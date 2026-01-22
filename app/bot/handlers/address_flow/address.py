@@ -48,6 +48,16 @@ async def choose_city_handler(message: Message, state: FSMContext):
                 text="VOE впав 😢. Спробуйте пізніше...",
                 reply_markup=back_to_main_menu_keyboard(),
             )
+            
+        if not response:
+            return await tg_sem_show_service_menu(
+                bot=message.bot,
+                chat_id=message.chat.id,
+                text="Місто не знайдено. <i>Напишіть ще раз назву міста</i>.\n"
+                "Перевірте чи існує таке місто в базі VOE.",
+                old_msg_id=msg_id,
+                reply_markup=back_to_main_menu_keyboard(),
+            )
 
     cities = [City.from_api(data) for data in response]
 
