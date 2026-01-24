@@ -1,9 +1,11 @@
 import logging
+from typing import Callable, Type
 
 from aiogram import F, Router
 from aiogram.enums import ChatAction
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
+from aiogram.types import InlineKeyboardMarkup, Message
 from aiogram.utils.chat_action import ChatActionSender
 from bot.keyboards import back_to_main_menu_keyboard
 from bot.keyboards.address_list import (
@@ -16,178 +18,138 @@ from bot.utils import tg_sem_show_service_menu
 from config import settings
 from exceptions import VoeDownException
 from services.fetcher import fetch_cities, fetch_houses, fetch_streets
-from services.models import City, House, Street
+from services.models import City, House, ItemBase, Street
 
 logger = logging.getLogger(__name__)
 
 router = Router(name=__name__)
 
 
-@router.message(AddressState.choosing_city, F.text)
-async def choose_city_handler(message: Message, state: FSMContext):
+async def address_search_step(
+    *,
+    message: Message,
+    state: FSMContext,
+    loading_text: str,
+    looking_for: str,
+    empty_result_text: str,
+    fetcher: Callable,
+    fetch_kwargs: dict,
+    model_cls: Type[ItemBase],
+    state_key: str,
+    keyboard_builder: Callable[[list], InlineKeyboardMarkup],
+):
+    logger.info(f"Address search step started for chat_id={message.chat.id}")
+    
+    try:
+        await message.delete()
+    except TelegramBadRequest:
+        logger.warning("Failed to delete message in address_search_step")
+        pass
+
+    query = message.text.strip()
+    data = await state.get_data()
+
+    message_id, chat_id = data.get("msg_id"), data.get("chat_id")
+    if not chat_id:
+        chat_id = message.chat.id
+
     bot = message.bot
-    await message.delete()
-    city_name = message.text.strip()
 
-    state_data = await state.get_data()
-    msg_id, chat_id = state_data.get("msg_id"), state_data.get("chat_id")
-
-    logger.info(f"User {message.from_user.id} is searching for city: {city_name}")
     async with ChatActionSender(bot=bot, chat_id=chat_id, action=ChatAction.TYPING):
-        await message.bot.edit_message_text(
-            text=settings.messages_loading.loading_city,
+        await tg_sem_show_service_menu(
+            bot=bot,
             chat_id=chat_id,
-            message_id=msg_id,
+            text=loading_text,
+            old_msg_id=message_id,
         )
+
         try:
-            response = await fetch_cities(city_name)
+            response = await fetcher(**fetch_kwargs, query=query)
         except VoeDownException:
             return await tg_sem_show_service_menu(
-                bot=message.bot,
-                chat_id=message.chat.id,
+                bot=bot,
+                chat_id=chat_id,
                 text="VOE впав 😢. Спробуйте пізніше...",
                 reply_markup=back_to_main_menu_keyboard(),
             )
-            
-        if not response:
-            return await tg_sem_show_service_menu(
-                bot=message.bot,
-                chat_id=message.chat.id,
-                text="Місто не знайдено. <i>Напишіть ще раз назву міста</i>.\n"
-                "Перевірте чи існує таке місто в базі VOE.",
-                old_msg_id=msg_id,
-                reply_markup=back_to_main_menu_keyboard(),
-            )
 
-    cities = [City.from_api(data) for data in response]
+    if not response:
+        return await tg_sem_show_service_menu(
+            bot=bot,
+            chat_id=chat_id,
+            text=empty_result_text,
+            reply_markup=back_to_main_menu_keyboard(),
+            old_msg_id=message_id,
+        )
 
-    await state.update_data(cities=[city.model_dump() for city in cities])
-    return await message.bot.edit_message_text(
-        text="Оберіть місто зі списку:",
-        reply_markup=cities_list_keyboard(cities),
+    logger.info(f"Fetched {len(response)} items for \"{query}\" {looking_for} search in chat_id={chat_id}")
+    objects = [model_cls.from_api(data) for data in response]
+    await state.update_data({state_key: [obj.model_dump() for obj in objects]})
+
+    return await tg_sem_show_service_menu(
+        bot=bot,
         chat_id=chat_id,
-        message_id=msg_id,
+        text=f"Оберіть {looking_for} зі списку:",
+        reply_markup=keyboard_builder(objects),
+        old_msg_id=message_id,
+    )
+
+
+@router.message(AddressState.choosing_city, F.text)
+async def choose_city_handler(message: Message, state: FSMContext):
+    logger.info(f"Handling choose_city_handler for chat_id={message.chat.id}")
+    return await address_search_step(
+        message=message,
+        state=state,
+        loading_text=settings.messages_loading.loading_city,
+        looking_for="місто",
+        empty_result_text="Місто не знайдено. <i>Напишіть ще раз назву міста</i>.",
+        fetcher=fetch_cities,
+        fetch_kwargs={},
+        model_cls=City,
+        state_key="cities",
+        keyboard_builder=cities_list_keyboard,
     )
 
 
 @router.message(AddressState.choosing_street)
 async def choose_street_handler(message: Message, state: FSMContext):
-    await message.delete()
-    street_name = message.text.strip()
-
+    logger.info(f"Handling choose_street_handler for chat_id={message.chat.id}")
     data = await state.get_data()
-    msg_id, chat_id = data.get("msg_id"), int(data.get("chat_id"))
+    city = City.model_validate(data.get("chosen_city"))
 
-    chosen_city_data = data.get("chosen_city")
-    if not chosen_city_data:
-        return await tg_sem_show_service_menu(
-            bot=message.bot,
-            chat_id=chat_id,
-            text="Сталася помилка. Спробуйте ще раз.",
-            old_msg_id=msg_id,
-            reply_markup=back_to_main_menu_keyboard(),
-        )
-    chosen_city = City.model_validate(chosen_city_data)
-
-    logger.info(f"User {message.from_user.id} is searching for street: {street_name}")
-    async with ChatActionSender(
-        bot=message.bot, chat_id=chat_id, action=ChatAction.TYPING
-    ):
-        await message.bot.edit_message_text(
-            text=settings.messages_loading.loading_street,
-            chat_id=chat_id,
-            message_id=msg_id,
-        )
-
-        try:
-            response = await fetch_streets(chosen_city.id, street_name)
-        except VoeDownException:
-            return await tg_sem_show_service_menu(
-                bot=message.bot,
-                chat_id=chat_id,
-                text="VOE впав 😢",
-                reply_markup=back_to_main_menu_keyboard(),
-            )
-    if not response:
-        await tg_sem_show_service_menu(
-            bot=message.bot,
-            chat_id=message.chat.id,
-            text="Вулицю не знайдено. <i>Напишіть ще раз назву вулиці</i>.\n"
-            "Введіть виключно назву вулиці без номеру будинку.\n"
-            "Перевірте чи існує така вулиця в базі VOE.",
-            old_msg_id=msg_id,
-            reply_markup=back_to_main_menu_keyboard(),
-        )
-        return
-
-    streets = [Street.from_api(data) for data in response]
-    await state.update_data(streets=[street.model_dump() for street in streets])
-
-    return await tg_sem_show_service_menu(
-        bot=message.bot,
-        text="Оберіть вулицю зі списку",
-        reply_markup=streets_list_keyboard(streets),
-        chat_id=chat_id,
-        old_msg_id=msg_id,
+    return await address_search_step(
+        message=message,
+        state=state,
+        loading_text=settings.messages_loading.loading_street,
+        looking_for="вулицю",
+        empty_result_text="Вулицю не знайдено. <i>Напишіть ще раз назву вулиці</i>.\n"
+        "Введіть виключно назву вулиці без номеру будинку.\n"
+        "Перевірте чи існує така вулиця в базі VOE.",
+        fetcher=fetch_streets,
+        fetch_kwargs={"city_id": city.id},
+        model_cls=Street,
+        state_key="streets",
+        keyboard_builder=streets_list_keyboard,
     )
 
 
 @router.message(AddressState.choosing_house)
 async def choose_house_handler(message: Message, state: FSMContext):
-    await message.delete()
+    logger.info(f"Handling choose_house_handler for chat_id={message.chat.id}")
     data = await state.get_data()
-    house_name = message.text.strip()
+    chosen_street = Street.model_validate(data.get("chosen_street"))
 
-    data = await state.get_data()
-    msg_id, chat_id = data.get("msg_id"), data.get("chat_id")
-
-    chosen_street_data = data.get("chosen_street")
-    if not chosen_street_data:
-        return await tg_sem_show_service_menu(
-            bot=message.bot,
-            chat_id=message.chat.id,
-            text="Сталася помилка. Спробуйте ще раз.",
-            old_msg_id=chat_id,
-            reply_markup=back_to_main_menu_keyboard(),
-        )
-    chosen_street = Street.model_validate(chosen_street_data)
-
-    logger.info(f"User {message.from_user.id} is searching for house: {house_name}")
-    async with ChatActionSender(
-        bot=message.bot, chat_id=chat_id, action=ChatAction.TYPING
-    ):
-        await tg_sem_show_service_menu(
-            bot=message.bot,
-            text=settings.messages_loading.loading_house,
-            chat_id=chat_id,
-            old_msg_id=msg_id,
-        )
-        try:
-            response = await fetch_houses(street_id=chosen_street.id, query=house_name)
-        except VoeDownException:
-            return await tg_sem_show_service_menu(
-                bot=message.bot,
-                chat_id=chat_id,
-                text="VOE впав 😢",
-                reply_markup=back_to_main_menu_keyboard(),
-            )
-    if not response:
-        return await tg_sem_show_service_menu(
-            bot=message.bot,
-            chat_id=message.chat.id,
-            text="Будинок не знайдено. <i>Напишіть ще раз номер будинку</i>.\n"
-            "Перевірте чи існує такий номер будинку в базі VOE.",
-            old_msg_id=msg_id,
-            reply_markup=back_to_main_menu_keyboard(),
-        )
-
-    houses = [House.from_api(h) for h in response]
-    await state.update_data(houses=[house.model_dump() for house in houses])
-
-    return await tg_sem_show_service_menu(
-        bot=message.bot,
-        text="Оберіть будинок зі списку",
-        reply_markup=houses_list_keyboard(houses),
-        chat_id=chat_id,
-        old_msg_id=msg_id,
+    return await address_search_step(
+        message=message,
+        state=state,
+        loading_text=settings.messages_loading.loading_house,
+        looking_for="будинок",
+        empty_result_text="Будинок не знайдено. <i>Напишіть ще раз номер будинку</i>.\n"
+        "Перевірте чи існує такий номер будинку в базі VOE.",
+        fetcher=fetch_houses,
+        fetch_kwargs={"street_id": chosen_street.id},
+        model_cls=House,
+        state_key="houses",
+        keyboard_builder=houses_list_keyboard,
     )
