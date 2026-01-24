@@ -45,7 +45,16 @@ async def show_service_menu(
 
         if "message to edit not found" in msg:
             logger.info(f"Service message {msg_id} not found in chat {chat_id}")
-            return False
+
+            new_msg = await bot.send_message(
+                chat_id=chat_id,
+                text=text,
+                reply_markup=reply_markup,
+                parse_mode="HTML",
+            )
+
+            await user_storage.set_service_msg(chat_id, new_msg.message_id)
+            return True
 
         logger.error(f"Failed to edit service message {msg_id} for chat {chat_id}: {e}")
         return False
