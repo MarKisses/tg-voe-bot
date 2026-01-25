@@ -69,7 +69,9 @@ def setup_bot() -> tuple[Bot, Dispatcher]:
     
     async def on_startup(bot: Bot) -> None:
         logger.info("Starting notification worker...")
-
+        
+        
+        await setup_bot_commands(bot)
         task = asyncio.create_task(
             notification_worker(bot, interval_seconds=settings.notification.interval)
         )
@@ -101,7 +103,6 @@ def setup_bot() -> tuple[Bot, Dispatcher]:
     
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
-    await setup_bot_commands(bot)
     return bot, dp
 
 async def run_polling():
