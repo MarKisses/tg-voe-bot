@@ -6,7 +6,6 @@ services:
     container_name: tg_disconnection_bot
     volumes:
       - ./app:/voe-bot/app
-      - /opt/telegram-cert:/certs:ro
     restart: unless-stopped
     environment:
       - TZ=Europe/Kyiv

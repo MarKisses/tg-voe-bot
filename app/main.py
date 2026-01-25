@@ -1,5 +1,6 @@
 import asyncio
 import ssl
+from typing import Optional
 
 from aiogram import Bot, Dispatcher
 from aiogram.types import (
@@ -9,7 +10,7 @@ from aiogram.types import (
     FSInputFile,
 )
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
-from aiohttp.web import Application, AppRunner, Response, TCPSite
+from aiohttp import web
 from bot.handlers import register_handlers
 from config import settings
 from logger import create_logger, init_logging
@@ -53,60 +54,77 @@ async def setup_bot_commands(bot: Bot):
 
 
 async def healthcheck(request):
-    return Response(text="OK")
+    return web.Response(text="OK")
 
 
-async def setup_bot() -> tuple[Bot, Dispatcher]:
+def setup_bot() -> tuple[Bot, Dispatcher]:
     if not settings.bot_token:
         logger.error("Bot token is not set. Please set BOT_TOKEN environment variable.")
-        raise ValueError("BOT_TOKEN is required")
-
-    bot = Bot(token=settings.bot_token)
-    dp = Dispatcher(storage=fsm_storage)
+        raise RuntimeError("BOT_TOKEN is required")
 
     logger.info("Starting bot...")
+    bot = Bot(token=settings.bot_token)
+    dp = Dispatcher(storage=fsm_storage)
     register_handlers(dp)
-    asyncio.create_task(
-        notification_worker(bot, interval_seconds=settings.notification.interval)
-    )
+    
+    async def on_startup(bot: Bot) -> None:
+        logger.info("Starting notification worker...")
+
+        task = asyncio.create_task(
+            notification_worker(bot, interval_seconds=settings.notification.interval)
+        )
+
+        dp["notification_worker"] = task
+
+        if settings.bot_mode == "webhook":
+            logger.info("Setting webhook...")
+            await bot.set_webhook(
+                url=settings.webhook.full_url,
+                secret_token=settings.webhook.secret_token,
+                certificate=FSInputFile(settings.webhook.ssl_cert_path),
+            )
+
+    async def on_shutdown(bot: Bot, dp: Dispatcher) -> None:
+        logger.info("Shutting down bot...")
+
+        task: Optional[asyncio.Task] = dp.get("notification_worker")
+
+        if task:
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+
+        await bot.session.close()
+        
+    
+    dp.startup.register(on_startup)
+    dp.shutdown.register(on_shutdown)
     await setup_bot_commands(bot)
     return bot, dp
 
-
 async def run_polling():
-    bot, dp = await setup_bot()
+    bot, dp = setup_bot()
+    logger.info("Deleting webhook (if any)...")
     await bot.delete_webhook(drop_pending_updates=True)
-    await dp.start_polling(bot)
+
     logger.info("Starting polling...")
+    await dp.start_polling(bot)
 
 
-async def run_webhook():
-    bot, dp = await setup_bot()
+def run_webhook():
+    bot, dp = setup_bot()
 
-    await bot.delete_webhook(drop_pending_updates=True)
-
-    app = Application()
-
-    SimpleRequestHandler(dp, bot, secret_token=settings.webhook.secret_token).register(
-        app, path=settings.webhook.path
-    )
-
+    app = web.Application()
     app.router.add_get("/", healthcheck)
 
-    setup_application(app, dp, bot=bot)
-
-    await bot.set_webhook(
-        url=settings.webhook.full_url,
-        secret_token=settings.webhook.secret_token,
-        certificate=FSInputFile(settings.webhook.ssl_cert_path),
+    webhook_requests_handler = SimpleRequestHandler(
+        dp, bot, secret_token=settings.webhook.secret_token
     )
+    webhook_requests_handler.register(app, path=settings.webhook.path)
 
-    logger.info("Starting webhook server...")
-
-    logger.info("Starting aiohttp webhook server on port %s", settings.webhook.port)
-
-    runner = AppRunner(app)
-    await runner.setup()
+    setup_application(app, dp, bot=bot)
 
     logger.info("Loading SSL context for webhook...")
     logger.debug("Cert path: %s", settings.webhook.ssl_cert_path)
@@ -116,27 +134,39 @@ async def run_webhook():
         certfile=settings.webhook.ssl_cert_path,
         keyfile=settings.webhook.ssl_key_path,
     )
-    site = TCPSite(
-        runner, host="0.0.0.0", port=settings.webhook.port, ssl_context=ssl_context
+
+    logger.info(
+        "Starting webhook server on %s:%s",
+        "0.0.0.0",
+        settings.webhook.port,
     )
-    await site.start()
 
-    await asyncio.Event().wait()
+    web.run_app(
+        app,
+        host="0.0.0.0",
+        port=settings.webhook.port,
+        ssl_context=ssl_context,
+    )
 
 
-async def main():
+def main():
     if settings.bot_mode == "polling":
-        await run_polling()
+        asyncio.run(run_polling())
     elif settings.bot_mode == "webhook":
-        await run_webhook()
+        run_webhook()
+    else:
+        raise ValueError(
+            f"Unknown BOT_MODE: {settings.bot_mode!r} (use 'polling' or 'webhook')"
+        )
 
 
 def run():
-    asyncio.run(main())
+    main()
 
 
 if __name__ == "__main__":
-    if settings.bot_mode == "polling":
+    init_logging()
+    if settings.debug and settings.bot_mode == "polling":
         run_process("app", target=run)
-    elif settings.bot_mode == "webhook":
+    else:
         run()

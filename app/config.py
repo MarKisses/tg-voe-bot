@@ -85,6 +85,7 @@ class Settings(BaseSettings):
 
     bot_token: str | None = None
     bot_mode: Literal["polling", "webhook"] = "polling"
+    debug: bool = False
     rate_limit_sem: int = 20  # Max concurrent messages to send
 
     admin_id: int | None = None

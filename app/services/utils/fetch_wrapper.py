@@ -55,6 +55,7 @@ async def fetch(
                 cookies = {"cf_clearance": cookie} if cookie else None
 
                 try:
+                    logger.warning(f"Fetching {url} (attempt {attempt + 1})")
                     r = await _attempt_request(
                         client, method, url, headers, params, cookies, data
                     )
