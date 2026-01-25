@@ -59,7 +59,7 @@ async def broadcast_message_handler(message: types.Message, state: FSMContext):
         )
 
     user_ids = await user_storage.get_all_users_id()
-    user_ids.remove(message.from_user.id)  # Exclude admin from broadcast
+    user_ids.discard(message.from_user.id)  # Exclude admin from broadcast if present
     
     logger.info(message.text)
     
