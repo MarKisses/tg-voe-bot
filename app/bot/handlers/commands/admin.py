@@ -100,8 +100,8 @@ async def broadcast_message_handler(message: types.Message, state: FSMContext):
             )
         )
 
-    await asyncio.gather(*message_tasks)
-    await asyncio.gather(*menu_tasks)
+    await asyncio.gather(*message_tasks, return_exceptions=True)
+    await asyncio.gather(*menu_tasks, return_exceptions=True)
     await state.clear()  # Clear state after broadcasting
 
     await tg_sem_show_service_menu(
