@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, InaccessibleMessage
 from storage import subscription_storage, user_storage
 
-from bot.keyboards.subcriptions import build_subscription_menu
+from bot.keyboards import build_subscription_menu
 from bot.utils import tg_sem_show_service_menu
 
 logger = getLogger(__name__)
