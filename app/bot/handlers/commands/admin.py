@@ -61,9 +61,13 @@ async def broadcast_message_handler(message: types.Message, state: FSMContext):
     user_ids = await user_storage.get_all_users_id()
     user_ids.discard(message.from_user.id)  # Exclude admin from broadcast if present
     
-    logger.info(message.text)
-    
     photo = message.photo[-1] if message.photo else None
+
+    if photo:
+        content_to_log = f"[photo] caption={message.caption!r}"
+    else:
+        content_to_log = f"[text] {message.text!r}"
+    logger.info(f"Broadcast message content: {content_to_log}")
     
     message_tasks = []
     menu_tasks = []
