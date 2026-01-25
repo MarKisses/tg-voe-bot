@@ -14,6 +14,8 @@ async def back_callback(callback: CallbackQuery, state: FSMContext):
         return
 
     _, action = callback.data.split(":", 1)
+    await state.clear()
+    
 
     if action == "main_menu":
         await tg_sem_show_service_menu(

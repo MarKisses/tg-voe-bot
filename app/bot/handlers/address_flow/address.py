@@ -13,7 +13,7 @@ from bot.keyboards.address_list import (
     houses_list_keyboard,
     streets_list_keyboard,
 )
-from bot.states.AddressState import AddressState
+from bot.states.address_state import AddressState
 from bot.utils import tg_sem_show_service_menu
 from config import settings
 from exceptions import VoeDownException
@@ -54,6 +54,8 @@ async def address_search_step(
         chat_id = message.chat.id
 
     bot = message.bot
+    if not bot:
+        return
 
     async with ChatActionSender(bot=bot, chat_id=chat_id, action=ChatAction.TYPING):
         await tg_sem_show_service_menu(
@@ -112,7 +114,7 @@ async def choose_city_handler(message: Message, state: FSMContext):
     )
 
 
-@router.message(AddressState.choosing_street)
+@router.message(AddressState.choosing_street, F.text)
 async def choose_street_handler(message: Message, state: FSMContext):
     logger.info(f"Handling choose_street_handler for chat_id={message.chat.id}")
     data = await state.get_data()
@@ -134,7 +136,7 @@ async def choose_street_handler(message: Message, state: FSMContext):
     )
 
 
-@router.message(AddressState.choosing_house)
+@router.message(AddressState.choosing_house, F.text)
 async def choose_house_handler(message: Message, state: FSMContext):
     logger.info(f"Handling choose_house_handler for chat_id={message.chat.id}")
     data = await state.get_data()

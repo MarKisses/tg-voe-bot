@@ -2,7 +2,12 @@ import asyncio
 import ssl
 
 from aiogram import Bot, Dispatcher
-from aiogram.types import FSInputFile
+from aiogram.types import (
+    BotCommand,
+    BotCommandScopeAllPrivateChats,
+    BotCommandScopeChat,
+    FSInputFile,
+)
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiohttp.web import Application, AppRunner, Response, TCPSite
 from bot.handlers import register_handlers
@@ -14,6 +19,37 @@ from watchfiles import run_process
 
 init_logging()
 logger = create_logger(__name__)
+
+
+async def setup_bot_commands(bot: Bot):
+    
+    user_commands = [
+            BotCommand(command="start", description="Запустити бота"),
+            BotCommand(command="about", description="Інформація про бота"),
+            BotCommand(command="help", description="Допомога"),
+        ]
+    
+    
+    await bot.set_my_commands(
+        user_commands,
+        scope=BotCommandScopeAllPrivateChats(),
+    )
+
+    admin_commands = [
+        *user_commands,
+        BotCommand(
+            command="notify_users",
+            description="Надіслати повідомлення всім користувачам бота",
+        ),
+    ]
+
+    if admin_id := settings.admin_id:
+        await bot.set_my_commands(
+            admin_commands,
+            scope=BotCommandScopeChat(
+                chat_id=admin_id,
+            ),
+        )
 
 
 async def healthcheck(request):
@@ -33,7 +69,7 @@ async def setup_bot() -> tuple[Bot, Dispatcher]:
     asyncio.create_task(
         notification_worker(bot, interval_seconds=settings.notification.interval)
     )
-
+    await setup_bot_commands(bot)
     return bot, dp
 
 
@@ -71,7 +107,7 @@ async def run_webhook():
 
     runner = AppRunner(app)
     await runner.setup()
-    
+
     logger.info("Loading SSL context for webhook...")
     logger.debug("Cert path: %s", settings.webhook.ssl_cert_path)
 

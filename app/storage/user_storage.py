@@ -84,7 +84,7 @@ class UserStorage:
 
     async def remove_address(self, user_id: int, address_id: str) -> None:
         """
-        Удалить адрес по id. Если его нет — тихо ничего не делаем.
+            Remove address from the user's list.
         """
         key = self._key(user_id)
         current = await self.get_addresses(user_id)
@@ -100,7 +100,7 @@ class UserStorage:
 
     async def clear_all(self, user_id: int) -> None:
         """
-        Полностью удалить все адреса пользователя.
+        Clear all addresses of the user.
         """
         key = self._key(user_id)
         await self.r.delete(key)
@@ -116,3 +116,16 @@ class UserStorage:
             return json.loads(raw)
         except json.JSONDecodeError:
             return None
+        
+    async def get_all_users_id(self) -> set[int]:
+        """
+        Get all user IDs who have stored addresses.
+        """
+        pattern = "user:*:addresses"
+        user_ids = set()
+        
+        async for key in self.r.scan_iter(pattern):
+            user_id = int(key.split(":")[1])
+            user_ids.add(user_id)
+        return user_ids
+        

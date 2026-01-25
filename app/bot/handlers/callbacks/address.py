@@ -10,7 +10,7 @@ from bot.keyboards.address_list import (
     day_list_keyboard,
     full_address_keyboard,
 )
-from bot.states.AddressState import AddressState
+from bot.states.address_state import AddressState
 from bot.utils import tg_sem_replace_service_menu, tg_sem_show_service_menu, tg_sem_send_photo
 from config import settings
 from exceptions import VoeDownException
