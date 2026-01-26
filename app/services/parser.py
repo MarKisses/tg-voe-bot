@@ -3,7 +3,14 @@ from datetime import datetime
 from logger import create_logger
 from lxml import etree
 
-from .models import DaySchedule, FullCell, HalfCell, HourCell, ScheduleResponse
+from .models import (
+    CurrentDisconnection,
+    DaySchedule,
+    FullCell,
+    HalfCell,
+    HourCell,
+    ScheduleResponse,
+)
 from .utils.parser_helpers import (
     _confirm_from_classes,
     _fmt_time,
@@ -18,12 +25,62 @@ from .utils.parser_helpers import (
 logger = create_logger(__name__)
 
 
+def parse_dt(label: str, text: str) -> datetime | None:
+    if label not in text:
+        logger.debug(f"Label '{label}' not found in text for datetime parsing.")
+        logger.debug(f"Text content: {text}")
+        return None
+    part = text.split(label, 1)[1].strip().split(" ")
+    logger.debug(f"Parsing datetime part: {part}")
+    try:
+        return datetime.strptime(" ".join(part[:2]), "%H:%M %Y.%m.%d")
+    except Exception:
+        return None
+
+
+def _current_disconnection_info(status_nodes: list[str]) -> CurrentDisconnection:
+    raw_status = " ".join(status_nodes).strip()
+
+    has_disconnection = "відсутня електроенергія" in raw_status
+    if not has_disconnection:
+        return CurrentDisconnection(
+            has_disconnection=False,
+            is_emergency=None,
+            reason=None,
+            started_at=None,
+            estimated_end=None,
+        )
+
+    is_emergency = None
+    reason = None
+    started_at = parse_dt("Час початку – ", raw_status)
+    estimated_end = parse_dt("Орієнтовний час відновлення – до", raw_status)
+
+    if "Причина відключення" in raw_status:
+        if "Аварійне" in raw_status:
+            is_emergency = True
+            reason = "Аварійне відключення"
+        else:
+            is_emergency = False
+            reason = (
+                raw_status.split("Причина відключення: ")[-1].split("Час")[0].strip()
+            )
+
+    return CurrentDisconnection(
+        has_disconnection=True,
+        is_emergency=is_emergency,
+        reason=reason,
+        started_at=started_at,
+        estimated_end=estimated_end,
+    )
+
+
 def parse_schedule(html: str, address_name: str, max_days: int = 2) -> ScheduleResponse:
     logger.debug("Starting parsing")
 
     tree = etree.HTML(html)
     queue_nodes = tree.xpath(
-        "//div[contains(@class,'disconnection-detailed-table')]//p/text()"
+        "//div[contains(@class,'disconnection-detailed-table')]//p//text()"
     )
     logger.debug(queue_nodes)
 
@@ -37,9 +94,12 @@ def parse_schedule(html: str, address_name: str, max_days: int = 2) -> ScheduleR
             address=address_name,
             disconnection_queue="Немає інформації про чергу відключень",
             disconnections=[],
+            current_disconnection=None,
         )
 
     queue = queue_nodes[0].strip()
+    queue_nodes = [node.strip() for node in queue_nodes]
+    current_disconnection = _current_disconnection_info(queue_nodes[1:])
 
     days = tree.xpath(
         "(//div[contains(@class, 'disconnection-detailed-table-container')])[1]"
@@ -53,6 +113,7 @@ def parse_schedule(html: str, address_name: str, max_days: int = 2) -> ScheduleR
             address=address_name,
             disconnection_queue=queue,
             disconnections=[],
+            current_disconnection=None,
         )
 
     day_dates = [_parse_day_label(day) for day in days]
@@ -203,10 +264,14 @@ def parse_schedule(html: str, address_name: str, max_days: int = 2) -> ScheduleR
         )
         # If no disconnections are found, we can return early with an empty response.
         return ScheduleResponse(
-            address=address_name, disconnection_queue=queue, disconnections=[]
+            current_disconnection=current_disconnection,
+            address=address_name,
+            disconnection_queue=queue,
+            disconnections=[],
         )
 
     result = ScheduleResponse(
+        current_disconnection=current_disconnection,
         address=address_name,
         disconnection_queue=queue,
         disconnections=disconnection_days,

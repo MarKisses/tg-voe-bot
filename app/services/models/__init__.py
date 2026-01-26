@@ -1,5 +1,12 @@
 from .address_models import Address, City, House, ItemBase, Street
-from .parser_models import DaySchedule, FullCell, HalfCell, HourCell, ScheduleResponse
+from .parser_models import (
+    CurrentDisconnection,
+    DaySchedule,
+    FullCell,
+    HalfCell,
+    HourCell,
+    ScheduleResponse,
+)
 
 __all__ = [
     "Address",
@@ -12,4 +19,5 @@ __all__ = [
     "HalfCell",
     "FullCell",
     "ScheduleResponse",
+    "CurrentDisconnection",
 ]
