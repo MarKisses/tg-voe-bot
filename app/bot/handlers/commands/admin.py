@@ -50,46 +50,13 @@ async def broadcast_message_handler(message: types.Message, state: FSMContext):
     await message.delete()
     logger.info(f"Broadcasting message from admin {message.from_user.id} to all users.")
 
-    if not message.text and not message.caption:
-        return await tg_sem_show_service_menu(
-            bot=message.bot,
-            chat_id=message.chat.id,
-            text="Будь ласка, надішліть текстове повідомлення для розсилки.",
-            reply_markup=back_to_main_menu_keyboard(),
-        )
-
     user_ids = await user_storage.get_all_users_id()
     user_ids.discard(message.from_user.id)  # Exclude admin from broadcast if present
-    
-    photo = message.photo[-1] if message.photo else None
 
-    if photo:
-        content_to_log = f"[photo] caption={message.caption!r}"
-    else:
-        content_to_log = f"[text] {message.text!r}"
-    logger.info(f"Broadcast message content: {content_to_log}")
-    
     message_tasks = []
     menu_tasks = []
     for user_id in user_ids:
-        
-        if photo:
-            message_tasks.append(
-                message.bot.send_photo(
-                    chat_id=user_id,
-                    photo=photo.file_id,
-                    caption=message.caption,
-                    parse_mode="HTML",
-                )
-            )
-        else:
-            message_tasks.append(
-                message.bot.send_message(
-                    chat_id=user_id,
-                    text=message.text,
-                    parse_mode="HTML",
-                )
-            )
+        message_tasks.append(message.copy_to(chat_id=user_id))
 
         menu_tasks.append(
             tg_sem_replace_service_menu(
@@ -110,4 +77,3 @@ async def broadcast_message_handler(message: types.Message, state: FSMContext):
         text="Повідомлення було надіслано всім користувачам бота.",
         reply_markup=main_menu_keyboard(),
     )
-
