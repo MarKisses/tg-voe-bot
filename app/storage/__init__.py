@@ -1,13 +1,13 @@
 from aiogram.fsm.storage.redis import RedisStorage
 from config import settings
-from redis.asyncio import ConnectionPool, Redis
+from redis.asyncio import BlockingConnectionPool, Redis
 
 from .subscription_storage import SubscriptionStorage
 from .user_storage import UserStorage
 
 
 def create_redis_client() -> Redis:
-    connection_pool = ConnectionPool(
+    connection_pool = BlockingConnectionPool(
         host=settings.redis.host,
         port=settings.redis.port,
         db=settings.redis.db,
@@ -15,6 +15,7 @@ def create_redis_client() -> Redis:
         username=settings.redis.username,
         decode_responses=True,
         max_connections=25,
+        timeout=2,
     )
 
     return Redis(connection_pool=connection_pool)
