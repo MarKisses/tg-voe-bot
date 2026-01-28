@@ -1,5 +1,5 @@
 from typing import List, Optional
-from datetime import datetime
+
 from pydantic import BaseModel
 
 
@@ -25,24 +25,24 @@ class DaySchedule(BaseModel):
     date: str
     has_disconnections: bool
     cells: List[HourCell]
-    
+
 
 class CurrentDisconnection(BaseModel):
     has_disconnection: bool
     is_emergency: bool | None
     reason: str | None
-    started_at: datetime | None
-    estimated_end: datetime | None
+    started_at: str | None
+    estimated_end: str | None
 
 
 class ScheduleResponse(BaseModel):
     address: str
     disconnection_queue: str
-    
+
     current_disconnection: CurrentDisconnection | None = None
-    
+
     disconnections: List[DaySchedule]
-    
+
     def get_day_schedule(self, date: str) -> Optional[DaySchedule]:
         for day in self.disconnections:
             if day.date == date:

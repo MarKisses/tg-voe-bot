@@ -58,7 +58,7 @@ class Webhook(BaseSettings):
         return f"{self.url}:{self.port}{self.path}"
 
 
-class Messages_Loading(BaseSettings):
+class MessagesLoading(BaseSettings):
     loading_city: str = "Завантаження міст..."
     loading_street: str = "Завантаження вулиць..."
     loading_house: str = "Завантаження будинків..."
@@ -95,7 +95,7 @@ class Settings(BaseSettings):
     flare: Flare = Flare()
     notification: Notification = Notification()
     webhook: Webhook = Webhook()
-    messages_loading: Messages_Loading = Messages_Loading()
+    messages_loading: MessagesLoading = MessagesLoading()
     renderer: Renderer = Renderer()
 
 

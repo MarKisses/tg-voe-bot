@@ -28,5 +28,5 @@ async def show_address_list(source: CallbackQuery, state: FSMContext):
         old_msg_id=source.message.message_id,
     )
     
-    await source.answer()
-    
+    return await source.answer()
+

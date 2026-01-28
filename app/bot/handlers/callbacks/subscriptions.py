@@ -49,9 +49,9 @@ async def subscriptions_callback(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(lambda c: c.data.startswith("sub:"))
 async def toggle_subscription(callback: CallbackQuery, state: FSMContext):
     if (
-        not callback.data
-        or not callback.message
-        or isinstance(callback.message, InaccessibleMessage)
+            not callback.data
+            or not callback.message
+            or isinstance(callback.message, InaccessibleMessage)
     ):
         return
 

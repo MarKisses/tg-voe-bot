@@ -10,22 +10,43 @@ class UserStorage:
     def __init__(self, redis: Redis) -> None:
         self.r = redis
 
-    def _key(self, user_id: int) -> str:
+    @staticmethod
+    def _key(user_id: int) -> str:
         return f"user:{user_id}:addresses"
 
-    def _service_msg(self, chat_id: int) -> str:
+    @staticmethod
+    def _service_msg_key(chat_id: int) -> str:
         return f"service_msg:{chat_id}"
 
+    @staticmethod
+    def _render_text_flag_key(user_id: int) -> str:
+        return f"settings:{user_id}:render_text"
+
+    async def is_render_text_enabled(self, user_id: int) -> bool:
+        key = self._render_text_flag_key(user_id)
+        raw = await self.r.get(key)
+        if not raw:
+            return False
+        return True
+    
+    async def enable_render_text(self, user_id: int) -> None:
+        key = self._render_text_flag_key(user_id)
+        await self.r.set(key, 1)
+
+    async def disable_render_text(self, user_id: int) -> None:
+        key = self._render_text_flag_key(user_id)
+        await self.r.delete(key)
+
     async def clear_service_msg(self, chat_id: int) -> None:
-        key = self._service_msg(chat_id)
+        key = self._service_msg_key(chat_id)
         await self.r.delete(key)
 
     async def set_service_msg(self, chat_id: int, msg_id: int) -> None:
-        key = self._service_msg(chat_id)
+        key = self._service_msg_key(chat_id)
         await self.r.set(key, msg_id)
 
     async def get_service_msg(self, chat_id: int) -> Optional[int]:
-        key = self._service_msg(chat_id)
+        key = self._service_msg_key(chat_id)
         raw = await self.r.get(key)
         if not raw:
             return None
@@ -74,7 +95,7 @@ class UserStorage:
         await pipe.execute()
 
     async def get_address_by_id(
-        self, user_id: int, address_id: str
+            self, user_id: int, address_id: str
     ) -> Optional[Address]:
         addresses = await self.get_addresses(user_id)
         for addr in addresses:
@@ -116,16 +137,15 @@ class UserStorage:
             return json.loads(raw)
         except json.JSONDecodeError:
             return None
-        
+
     async def get_all_users_id(self) -> set[int]:
         """
         Get all user IDs who have stored addresses.
         """
         pattern = "user:*:addresses"
         user_ids = set()
-        
+
         async for key in self.r.scan_iter(pattern):
             user_id = int(key.split(":")[1])
             user_ids.add(user_id)
         return user_ids
-        

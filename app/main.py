@@ -86,7 +86,7 @@ def setup_bot() -> tuple[Bot, Dispatcher]:
                 certificate=FSInputFile(settings.webhook.ssl_cert_path),
             )
 
-    async def on_shutdown(bot: Bot, dp: Dispatcher) -> None:
+    async def on_shutdown(bot: Bot) -> None:
         logger.info("Shutting down bot...")
 
         task: Optional[asyncio.Task] = dp.get("notification_worker")

@@ -47,16 +47,21 @@ async def admin_command(message: types.Message, state: FSMContext):
 
 @router.message(AdminState.waiting_for_broadcast)
 async def broadcast_message_handler(message: types.Message, state: FSMContext):
-    await message.delete()
     logger.info(f"Broadcasting message from admin {message.from_user.id} to all users.")
 
     user_ids = await user_storage.get_all_users_id()
-    user_ids.discard(message.from_user.id)  # Exclude admin from broadcast if present
+    # user_ids.discard(message.from_user.id)  # Exclude admin from broadcast if present
 
     message_tasks = []
     menu_tasks = []
     for user_id in user_ids:
-        message_tasks.append(message.copy_to(chat_id=user_id))
+        message_tasks.append(
+            message.bot.copy_message(
+                chat_id=user_id,
+                from_chat_id=message.chat.id,
+                message_id=message.message_id,
+            )
+        )
 
         menu_tasks.append(
             tg_sem_replace_service_menu(
@@ -69,6 +74,7 @@ async def broadcast_message_handler(message: types.Message, state: FSMContext):
 
     await asyncio.gather(*message_tasks, return_exceptions=True)
     await asyncio.gather(*menu_tasks, return_exceptions=True)
+    await message.delete()
     await state.clear()  # Clear state after broadcasting
 
     await tg_sem_show_service_menu(

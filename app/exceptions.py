@@ -1,3 +1,3 @@
 class VoeDownException(Exception):
-    """Base exception for VoeDoown errors."""
+    """Base exception for VoeDown errors."""
     pass

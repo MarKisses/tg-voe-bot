@@ -12,67 +12,18 @@ from .models import (
     ScheduleResponse,
 )
 from .utils.parser_helpers import (
-    _confirm_from_classes,
-    _fmt_time,
-    _get_classes,
-    _has_disconnection,
-    _has_full_disconnection,
-    _inc_time,
-    _parse_css_var,
-    _parse_day_label,
+    confirm_from_classes,
+    current_disconnection_info,
+    fmt_time,
+    get_classes,
+    has_disconnection,
+    has_full_disconnection,
+    inc_time,
+    parse_css_var,
+    parse_day_label,
 )
 
 logger = create_logger(__name__)
-
-
-def parse_dt(label: str, text: str) -> datetime | None:
-    if label not in text:
-        logger.debug(f"Label '{label}' not found in text for datetime parsing.")
-        logger.debug(f"Text content: {text}")
-        return None
-    part = text.split(label, 1)[1].strip().split(" ")
-    logger.debug(f"Parsing datetime part: {part}")
-    try:
-        return datetime.strptime(" ".join(part[:2]), "%H:%M %Y.%m.%d")
-    except Exception:
-        return None
-
-
-def _current_disconnection_info(status_nodes: list[str]) -> CurrentDisconnection:
-    raw_status = " ".join(status_nodes).strip()
-
-    has_disconnection = "відсутня електроенергія" in raw_status
-    if not has_disconnection:
-        return CurrentDisconnection(
-            has_disconnection=False,
-            is_emergency=None,
-            reason=None,
-            started_at=None,
-            estimated_end=None,
-        )
-
-    is_emergency = None
-    reason = None
-    started_at = parse_dt("Час початку – ", raw_status)
-    estimated_end = parse_dt("Орієнтовний час відновлення – до", raw_status)
-
-    if "Причина відключення" in raw_status:
-        if "Аварійне" in raw_status:
-            is_emergency = True
-            reason = "Аварійне відключення"
-        else:
-            is_emergency = False
-            reason = (
-                raw_status.split("Причина відключення: ")[-1].split("Час")[0].strip()
-            )
-
-    return CurrentDisconnection(
-        has_disconnection=True,
-        is_emergency=is_emergency,
-        reason=reason,
-        started_at=started_at,
-        estimated_end=estimated_end,
-    )
 
 
 def parse_schedule(html: str, address_name: str, max_days: int = 2) -> ScheduleResponse:
@@ -99,7 +50,9 @@ def parse_schedule(html: str, address_name: str, max_days: int = 2) -> ScheduleR
 
     queue = queue_nodes[0].strip()
     queue_nodes = [node.strip() for node in queue_nodes]
-    current_disconnection = _current_disconnection_info(queue_nodes[1:])
+    current_disconnection: CurrentDisconnection = current_disconnection_info(
+        queue_nodes[1:]
+    )
 
     days = tree.xpath(
         "(//div[contains(@class, 'disconnection-detailed-table-container')])[1]"
@@ -116,7 +69,7 @@ def parse_schedule(html: str, address_name: str, max_days: int = 2) -> ScheduleR
             current_disconnection=None,
         )
 
-    day_dates = [_parse_day_label(day) for day in days]
+    day_dates = [parse_day_label(day) for day in days]
 
     # Hours in format "HH:00"
     hours = [f"{h:02d}:00" for h in range(24)]
@@ -147,10 +100,10 @@ def parse_schedule(html: str, address_name: str, max_days: int = 2) -> ScheduleR
             cell_index += 1
 
             # Classes for full-hour
-            cell_classes = _get_classes(cell)
-            full_off = _has_full_disconnection(cell_classes)
-            partially_off = _has_disconnection(cell_classes)
-            confirm_disconnection = _confirm_from_classes(cell_classes)
+            cell_classes = get_classes(cell)
+            full_off = has_full_disconnection(cell_classes)
+            partially_off = has_disconnection(cell_classes)
+            confirm_disconnection = confirm_from_classes(cell_classes)
 
             # TODO halves. НАДО ПРИЧЕСАТЬ!
             fill_el = cell.xpath(
@@ -165,22 +118,22 @@ def parse_schedule(html: str, address_name: str, max_days: int = 2) -> ScheduleR
                 base_h, base_m = 0, 0
 
             l_h, l_m = base_h, base_m
-            l_e_h, l_e_m = _inc_time(base_h, base_m, 30)
+            l_e_h, l_e_m = inc_time(base_h, base_m, 30)
             r_h, r_m = l_e_h, l_e_m
-            r_e_h, r_e_m = _inc_time(base_h, base_m, 60)
+            r_e_h, r_e_m = inc_time(base_h, base_m, 60)
 
             if full_off:
                 day_has_disconnections = True
                 halves = [
                     HalfCell(
-                        start=_fmt_time(l_h, l_m),
-                        end=_fmt_time(l_e_h, l_e_m),
+                        start=fmt_time(l_h, l_m),
+                        end=fmt_time(l_e_h, l_e_m),
                         off=True,
                         confirm=confirm_disconnection,
                     ),
                     HalfCell(
-                        start=_fmt_time(r_h, r_m),
-                        end=_fmt_time(r_e_h, r_e_m),
+                        start=fmt_time(r_h, r_m),
+                        end=fmt_time(r_e_h, r_e_m),
                         off=True,
                         confirm=confirm_disconnection,
                     ),
@@ -191,8 +144,8 @@ def parse_schedule(html: str, address_name: str, max_days: int = 2) -> ScheduleR
 
                 if fill_el is not None:
                     style = fill_el.attrib.get("style", "")
-                    start_pct = _parse_css_var(style, "start") or 0
-                    size_pct = _parse_css_var(style, "size") or 0
+                    start_pct = parse_css_var(style, "start") or 0
+                    size_pct = parse_css_var(style, "size") or 0
 
                     start_min = int(start_pct * 60 / 100)
                     end_min = min(60, int((start_pct + size_pct) * 60 / 100))
@@ -203,21 +156,21 @@ def parse_schedule(html: str, address_name: str, max_days: int = 2) -> ScheduleR
                     left_off = overlaps(0, 30, start_min, end_min)
                     right_off = overlaps(30, 60, start_min, end_min)
 
-                    confirmed = "confirmed" in _get_classes(fill_el)
+                    confirmed = "confirmed" in get_classes(fill_el)
 
                     if left_off or right_off:
                         day_has_disconnections = True
 
                 halves = [
                     HalfCell(
-                        start=_fmt_time(l_h, l_m),
-                        end=_fmt_time(l_e_h, l_e_m),
+                        start=fmt_time(l_h, l_m),
+                        end=fmt_time(l_e_h, l_e_m),
                         off=bool(left_off),
                         confirm=confirmed if left_off else None,
                     ),
                     HalfCell(
-                        start=_fmt_time(r_h, r_m),
-                        end=_fmt_time(r_e_h, r_e_m),
+                        start=fmt_time(r_h, r_m),
+                        end=fmt_time(r_e_h, r_e_m),
                         off=bool(right_off),
                         confirm=confirmed if right_off else None,
                     ),
@@ -226,14 +179,14 @@ def parse_schedule(html: str, address_name: str, max_days: int = 2) -> ScheduleR
             else:
                 halves = [
                     HalfCell(
-                        start=_fmt_time(l_h, l_m),
-                        end=_fmt_time(l_e_h, l_e_m),
+                        start=fmt_time(l_h, l_m),
+                        end=fmt_time(l_e_h, l_e_m),
                         off=False,
                         confirm=None,
                     ),
                     HalfCell(
-                        start=_fmt_time(r_h, r_m),
-                        end=_fmt_time(r_e_h, r_e_m),
+                        start=fmt_time(r_h, r_m),
+                        end=fmt_time(r_e_h, r_e_m),
                         off=False,
                         confirm=None,
                     ),
