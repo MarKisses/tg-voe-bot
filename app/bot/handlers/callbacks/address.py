@@ -11,12 +11,17 @@ from bot.keyboards.address_list import (
     full_address_keyboard,
 )
 from bot.states.address_state import AddressState
-from bot.utils import tg_sem_replace_service_menu, tg_sem_show_service_menu, tg_sem_send_photo
+from bot.utils import (
+    tg_sem_replace_service_menu,
+    tg_sem_send_message,
+    tg_sem_send_photo,
+    tg_sem_show_service_menu,
+)
 from config import settings
 from exceptions import VoeDownException
 from logger import create_logger
-from services import fetch_schedule, parse_schedule, render_schedule_image
-from services.models import Address, City, House, ScheduleResponse, Street
+from services import fetch_schedule, parse_schedule, render_schedule
+from services.models import Address, City, House, ScheduleResponse, Street, TextResult
 from storage import subscription_storage, user_storage
 
 logger = create_logger(__name__)
@@ -305,21 +310,36 @@ async def day_select_callback(callback: CallbackQuery, state: FSMContext):
                 reply_markup=day_list_keyboard(addr_id),
             )
 
-        buffered_file = BufferedInputFile(
-            render_schedule_image(
-                day=day,
-                queue=schedule.disconnection_queue,
-                date=date,
-                address=schedule.address,
-            ).getvalue(),
-            filename="schedule.png",
+        rendered_schedule = render_schedule(
+            day=day,
+            is_text_enabled=await user_storage.is_render_text_enabled(
+                callback.from_user.id
+            ),
+            queue=schedule.disconnection_queue,
+            date=date,
+            address=schedule.address,
+            current_disconnection=schedule.current_disconnection,
         )
 
-        await tg_sem_send_photo(
-            bot=callback.bot,
-            chat_id=callback.message.chat.id,
-            photo=buffered_file,
-        )
+        if isinstance(rendered_schedule, TextResult):
+            await tg_sem_send_message(
+                bot=callback.bot,
+                chat_id=callback.message.chat.id,
+                text=rendered_schedule.text,
+                parse_mode="HTML",
+            )
+        else:
+            buffered_file = BufferedInputFile(
+                rendered_schedule.image_bytes,
+                filename="schedule.png",
+            )
+            await tg_sem_send_photo(
+                bot=callback.bot,
+                chat_id=callback.message.chat.id,
+                photo=buffered_file,
+                caption=rendered_schedule.text,
+                parse_mode="HTML",
+            )
 
         return await tg_sem_replace_service_menu(
             bot=callback.bot,

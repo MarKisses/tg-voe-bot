@@ -55,7 +55,7 @@ async def address_search_step(
 
     bot = message.bot
     if not bot:
-        return
+        return None
 
     async with ChatActionSender(bot=bot, chat_id=chat_id, action=ChatAction.TYPING):
         await tg_sem_show_service_menu(

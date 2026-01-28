@@ -5,6 +5,7 @@ from aiogram.types import CallbackQuery
 from bot.menus.about import show_info
 from bot.menus.address_flow.address import ask_city
 from bot.menus.address_list import show_address_list
+from bot.menus.settings import show_settings
 
 router = Router(name=__name__)
 
@@ -25,4 +26,6 @@ async def go_callback(callback: CallbackQuery, state: FSMContext):
     if action == "bot_info":
         await show_info(callback)
 
+    if action == "settings":
+        await show_settings(callback, state)
     await callback.answer()

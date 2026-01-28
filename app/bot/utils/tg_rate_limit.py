@@ -48,3 +48,18 @@ async def tg_sem_replace_service_menu(
             reply_markup=reply_markup,
             **kwargs,
         )
+
+async def tg_sem_send_message(
+        bot: Bot | None,
+        chat_id: int,
+        text: str,
+        reply_markup: InlineKeyboardMarkup | None = None,
+        **kwargs
+):
+    async with TG_SEMAPHORE:
+        return await bot.send_message(
+            chat_id=chat_id,
+            text=text,
+            reply_markup=reply_markup,
+            **kwargs,
+        )

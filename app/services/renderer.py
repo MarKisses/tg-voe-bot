@@ -1,33 +1,54 @@
+from datetime import datetime
 from io import BytesIO
+from typing import Callable
 
 from config import settings
+from logger import create_logger
 from PIL import Image, ImageDraw
-from services.models import DaySchedule
+from services.models import (
+    CurrentDisconnection,
+    DaySchedule,
+    HalfCell,
+    ImageResult,
+    RenderedSchedule,
+    TextResult,
+)
 
 from .utils.renderer_helpers import (
     TextBox,
     half_color,
 )
 
+logger = create_logger(__name__)
+
 
 def render_schedule_image(
-    day: DaySchedule, queue: str, date: str, address: str
-) -> BytesIO:
-    IMAGE_W = 1000
-    IMAGE_H = 1000
+    day: DaySchedule,
+    current_disconnection: CurrentDisconnection | None,
+    queue: str,
+    date: str,
+    address: str,
+) -> bytes:
+    """
+    Render schedule as an image and return it as bytes.
+    """
+    date = datetime.fromisoformat(date).date().strftime("%d-%m-%Y")
+
+    image_w = 1000
+    image_h = 1000
     cols = 4
     rows = 6
 
-    col_w = IMAGE_W // (cols + 1)  # +1 col for side paddings
-    row_h = IMAGE_H // (rows + 4)  # +4 rows for upper and bottom paddings
+    col_w = image_w // (cols + 1)  # +1 col for side padsdings
+    row_h = image_h // (rows + 4)  # +4 rows for upper and bottom paddings
 
-    img = Image.new("RGBA", (IMAGE_W, IMAGE_H), settings.renderer.color_bg)
+    img = Image.new("RGBA", (image_w, image_h), settings.renderer.color_bg)
     draw = ImageDraw.Draw(img)
 
     # ---- Заголовок ----
     header_text = f"{queue} | {date} | {address}"
     draw.rectangle(
-        [col_w / 2, row_h / 2, IMAGE_W - (col_w / 2), row_h / 2 + row_h],
+        [col_w / 2, row_h / 2, image_w - (col_w / 2), row_h / 2 + row_h],
         fill=settings.renderer.color_header,
         outline=settings.renderer.color_grid,
         width=4,
@@ -39,7 +60,7 @@ def render_schedule_image(
         col_w * 4,
         row_h,
         min_font_size=3,
-        max_font_size=int(IMAGE_W * 0.04),
+        max_font_size=int(image_w * 0.04),
         fill="white",
         padding_left=10,
         padding_top=10,
@@ -64,7 +85,7 @@ def render_schedule_image(
         x2 = x1 + col_w
         y2 = y1 + row_h
 
-        if full.off is True:
+        if full.off:
             # confirmed full hour
             color = half_color(full)
             draw.rectangle([x1, y1, x2, y2], fill=color)
@@ -90,7 +111,7 @@ def render_schedule_image(
             (x1, y1),
             col_w,
             row_h,
-            max_font_size=int(IMAGE_W * 0.035),
+            max_font_size=int(image_w * 0.035),
             fill=cell_text_fill,
         )
         cell_text.draw_text(hour)
@@ -110,8 +131,6 @@ def render_schedule_image(
             fill=settings.renderer.color_grid,
             width=4,
         )
-
-    # ---- Легенда ----
 
     draw.rounded_rectangle(
         [col_w * 0.5, row_h * 8.5, col_w * 1.1, row_h * 9.5],
@@ -134,7 +153,7 @@ def render_schedule_image(
         (col_w * 1.5, row_h * 8.5),
         col_w,
         row_h,
-        max_font_size=int(IMAGE_W * 0.036),
+        max_font_size=int(image_w * 0.036),
         padding_right=50,
     ).draw_text("Можливе відключення")
 
@@ -143,7 +162,7 @@ def render_schedule_image(
         (col_w * 3.5, row_h * 8.5),
         col_w,
         row_h,
-        max_font_size=int(IMAGE_W * 0.036),
+        max_font_size=int(image_w * 0.036),
         padding_right=50,
     ).draw_text("Підтверджене\nвідключення")
 
@@ -151,4 +170,160 @@ def render_schedule_image(
     output = BytesIO()
     img.save(output, format="PNG")
     output.seek(0)
-    return output
+    return output.getvalue()
+
+
+def consume_range(
+    halves: list[HalfCell],
+    start_index: int,
+    predicate: Callable,
+) -> tuple[int, str | None, float]:
+    length = len(halves)
+    i = start_index
+
+    if i >= length or not predicate(halves[i]):
+        return i, None, 0
+
+    start = halves[i].start
+    hours = 0
+
+    while i < length and predicate(halves[i]):
+        hours += 0.5
+        i += 1
+
+    end = halves[i - 1].end
+    return i, f"{start} - {end}", hours
+
+
+def hour_str_modifier(disconnection_length: float) -> str:
+    def format_hour_word(hours: float) -> str:
+        return str(int(hours) if hours.is_integer() else hours)
+
+    if disconnection_length == 0:
+        return f"<b>{format_hour_word(disconnection_length)} годин</b>"
+
+    if disconnection_length == 1:
+        return f"<b>{format_hour_word(disconnection_length)} година</b>"
+
+    if 0 < disconnection_length < 1 or 1 < disconnection_length < 5:
+        return f"<b>{format_hour_word(disconnection_length)} години</b>"
+
+    return f"<b>{format_hour_word(disconnection_length)} годин</b>"
+
+
+def generate_disconnection_message(
+    current_disconnection: CurrentDisconnection | None,
+) -> str:
+    if not current_disconnection:
+        return ""
+    if current_disconnection and current_disconnection.has_disconnection:
+        start_time = "Невідомо"
+        end_time = "Невідомо"
+        if current_disconnection.started_at and current_disconnection.estimated_end:
+            start_time = datetime.fromisoformat(
+                current_disconnection.started_at
+            ).strftime("%H:%M %d-%m-%Y")
+            end_time = datetime.fromisoformat(
+                current_disconnection.estimated_end
+            ).strftime("%H:%M %d-%m-%Y")
+
+        return (
+            "За вашою адресою зараз відсутня електроенергія.\n"
+            f"Причина: <b><u>{current_disconnection.reason or 'Невідома'}</u></b>.\n"
+            f"Час початку: <b>{start_time}</b>.\n"
+            f"Орієнтовний час відновлення: <b>{end_time}</b>.\n"
+        )
+    return ""
+
+
+def render_schedule_text(
+    day: DaySchedule,
+    current_disconnection: CurrentDisconnection | None,
+    queue: str,
+    date: str,
+    address: str,
+) -> str:
+    """
+    Render schedule text for Telegram message.
+    """
+    disconnection_date_str = datetime.fromisoformat(date).date().strftime("%d-%m-%Y")
+
+    lines: list[str | None] = [
+        f"<b>{queue}</b> · <b>{disconnection_date_str}</b>\n",
+        f"📍 {address}\n",
+    ]
+
+    current_disconnection_part = generate_disconnection_message(current_disconnection)
+    if current_disconnection_part:
+        lines.append(current_disconnection_part)
+
+    halves = [halve for hour in day.cells for halve in hour.halves]
+
+    confirmed = 0
+    unconfirmed = 0
+
+    i = 0
+    while i < len(halves):
+        # Confirmed disconnections
+        i, range_str, hours = consume_range(halves, i, lambda h: h.off and h.confirm)
+        if range_str:
+            confirmed += hours
+            lines.append(f"🟥 <b>{range_str}</b> — Підтверджене відключення")
+
+        # Unconfirmed disconnections
+        i, range_str, hours = consume_range(
+            halves, i, lambda h: h.off and not h.confirm
+        )
+        if range_str:
+            unconfirmed += hours
+            lines.append(f"🟧 <b>{range_str}</b> — Можливе відключення")
+
+        # No disconnection
+        i, range_str, hours = consume_range(halves, i, lambda h: not h.off)
+        if range_str:
+            lines.append(f"🟩 <b>{range_str}</b> — Зі світлом")
+        lines.append(" ")
+
+    lines.extend(
+        [
+            f"Підтверджених відключень: {hour_str_modifier(confirmed)}",
+            f"Можливих відключень: {hour_str_modifier(unconfirmed)}"
+            if unconfirmed
+            else None,
+            f"Зі світлом: {hour_str_modifier(24 - confirmed - unconfirmed)}",
+            f"Оновлено: <b>{datetime.now().strftime('%d-%m-%Y %H:%M:%S')}</b>",
+        ]
+    )
+
+    return "\n".join(filter(None, lines))
+
+
+def render_schedule(
+    day: DaySchedule,
+    is_text_enabled: bool,
+    queue: str,
+    date: str,
+    address: str,
+    current_disconnection: CurrentDisconnection | None = None,
+) -> RenderedSchedule:
+    if is_text_enabled:
+        return TextResult(
+            text=render_schedule_text(
+                day,
+                current_disconnection,
+                queue,
+                date,
+                address,
+            )
+        )
+    else:
+        return ImageResult(
+            text=generate_disconnection_message(current_disconnection),
+            image_bytes=render_schedule_image(
+                day,
+                current_disconnection,
+                queue,
+                date,
+                address,
+            ),
+        )

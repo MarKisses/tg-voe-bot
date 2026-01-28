@@ -27,11 +27,22 @@ class DaySchedule(BaseModel):
     cells: List[HourCell]
 
 
+class CurrentDisconnection(BaseModel):
+    has_disconnection: bool
+    is_emergency: bool | None
+    reason: str | None
+    started_at: str | None
+    estimated_end: str | None
+
+
 class ScheduleResponse(BaseModel):
     address: str
     disconnection_queue: str
+
+    current_disconnection: CurrentDisconnection | None = None
+
     disconnections: List[DaySchedule]
-    
+
     def get_day_schedule(self, date: str) -> Optional[DaySchedule]:
         for day in self.disconnections:
             if day.date == date:

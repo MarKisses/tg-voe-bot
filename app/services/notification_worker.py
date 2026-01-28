@@ -5,15 +5,19 @@ from typing import Literal
 from aiogram import Bot
 from aiogram.types.input_file import BufferedInputFile
 from bot.keyboards.main_menu import main_menu_keyboard
-from bot.utils import tg_sem_send_photo, tg_sem_replace_service_menu
+from bot.utils import (
+    tg_sem_replace_service_menu,
+    tg_sem_send_message,
+    tg_sem_send_photo,
+)
+from config import settings
 from exceptions import VoeDownException
 from logger import create_logger
+from services import render_schedule
 from services.fetcher import fetch_schedule
 from services.models import ScheduleResponse
 from services.parser import parse_schedule
-from services.renderer import render_schedule_image
 from storage import subscription_storage, user_storage
-from config import settings
 
 logger = create_logger(__name__)
 
@@ -57,7 +61,7 @@ async def _update_hashes_for_address(
         elif today_hash != today_old:
             await subscription_storage.set_last_hash(addr_id, "today", today_hash)
             changed.add("today")
-            
+
         logger.debug(f"Today hash: {today_hash}, old: {today_old}")
 
     # --- TOMORROW ---
@@ -69,13 +73,13 @@ async def _update_hashes_for_address(
         if tomorrow_hash != tomorrow_old and tomorrow.has_disconnections:
             await subscription_storage.set_last_hash(addr_id, "tomorrow", tomorrow_hash)
             changed.add("tomorrow")
-            
+
         logger.debug(f"Tomorrow hash: {tomorrow_hash}, old: {tomorrow_old}")
 
     # Avoid notifying both today and tomorrow if they are identical
     if "today" in changed and today and tomorrow_old and today_hash == tomorrow_old:
         changed.remove("today")
-        
+
     if settings.notification.silent_hash_recalculation:
         changed.clear()
     return changed
@@ -138,23 +142,44 @@ async def _process_for_address(
             logger.warning(f"No schedule for today for {addr_id}")
             return processed_users
 
-        image_bytes = render_schedule_image(
+        tasks = []
+        text_schedule = render_schedule(
             day=day_schedule,
+            is_text_enabled=True,
             queue=schedule.disconnection_queue,
             date=today,
             address=schedule.address,
-        ).getvalue()
-        tasks = []
+        )
+        image_schedule = render_schedule(
+            day=day_schedule,
+            is_text_enabled=False,
+            queue=schedule.disconnection_queue,
+            date=today,
+            address=schedule.address,
+        )
         for uid in subscribers_today:
-            tasks.append(
-                tg_sem_send_photo(
-                    bot,
-                    chat_id=uid,
-                    photo=BufferedInputFile(image_bytes, filename="schedule.png"),
-                    caption=msg,
-                    show_caption_above_media=True,
+            if await user_storage.is_render_text_enabled(uid):
+                tasks.append(
+                    tg_sem_send_message(
+                        bot=bot,
+                        chat_id=uid,
+                        text=f"{msg}\n{text_schedule.text}",
+                        parse_mode="HTML",
+                    )
                 )
-            )
+            else:
+                tasks.append(
+                    tg_sem_send_photo(
+                        bot=bot,
+                        chat_id=uid,
+                        photo=BufferedInputFile(
+                            image_schedule.image_bytes,
+                            filename="schedule.png",
+                        ),
+                        caption=msg,
+                        show_caption_above_media=True,
+                    )
+                )
             processed_users.add(uid)
             logger.info(
                 f"Sent notification to user {uid} for address {addr_id} today ({schedule.address})"
@@ -167,23 +192,44 @@ async def _process_for_address(
             logger.warning(f"No schedule for tomorrow for {addr_id}")
             return processed_users
 
-        image_bytes = render_schedule_image(
+        tasks = []
+        text_schedule = render_schedule(
             day=day_schedule,
+            is_text_enabled=True,
             queue=schedule.disconnection_queue,
             date=tomorrow,
             address=schedule.address,
-        ).getvalue()
-        tasks = []
+        )
+        image_schedule = render_schedule(
+            day=day_schedule,
+            is_text_enabled=False,
+            queue=schedule.disconnection_queue,
+            date=tomorrow,
+            address=schedule.address,
+        )
         for uid in subscribers_tomorrow:
-            tasks.append(
-                tg_sem_send_photo(
-                    bot,
-                    chat_id=uid,
-                    photo=BufferedInputFile(image_bytes, filename="schedule.png"),
-                    caption=msg,
-                    show_caption_above_media=True,
+            if await user_storage.is_render_text_enabled(uid):
+                tasks.append(
+                    tg_sem_send_message(
+                        bot,
+                        chat_id=uid,
+                        text=f"{msg}\n{text_schedule.text}",
+                        parse_mode="HTML",
+                    )
                 )
-            )
+            else:
+                tasks.append(
+                    tg_sem_send_photo(
+                        bot,
+                        chat_id=uid,
+                        photo=BufferedInputFile(
+                            image_schedule.image_bytes,
+                            filename="schedule.png",
+                        ),
+                        caption=msg,
+                        show_caption_above_media=True,
+                    )
+                )
             processed_users.add(uid)
             logger.info(
                 f"Sent notification to user {uid} for address {addr_id} tomorrow ({schedule.address})"
@@ -239,9 +285,11 @@ async def notification_worker(bot: Bot, interval_seconds: int = 900) -> None:
             logger.info(
                 f"Notification worker tick completed. Processed {len(processed_users)} users."
             )
-            
+
             if settings.notification.silent_hash_recalculation:
-                logger.info("Silent hash recalculation mode is ON. No notifications were sent.")
+                logger.info(
+                    "Silent hash recalculation mode is ON. No notifications were sent."
+                )
                 settings.notification.silent_hash_recalculation = False
                 logger.info("Silent hash recalculation mode is now OFF.")
 

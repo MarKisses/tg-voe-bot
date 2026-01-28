@@ -2,8 +2,13 @@ import re
 from datetime import date, datetime
 from typing import List, Optional, Tuple
 
+from logger import create_logger
+from services.models import CurrentDisconnection
 
-def _confirm_from_classes(classes: List[str]) -> Optional[bool]:
+logger = create_logger(__name__)
+
+
+def confirm_from_classes(classes: List[str]) -> Optional[bool]:
     if not classes:
         return None
     if "confirm_1" in classes:
@@ -13,14 +18,14 @@ def _confirm_from_classes(classes: List[str]) -> Optional[bool]:
     return None
 
 
-def _has_disconnection(classes: List[str]) -> Optional[bool]:
+def has_disconnection(classes: List[str]) -> Optional[bool]:
     if not classes:
         return None
 
     return "has_disconnection" in classes
 
 
-def _has_full_disconnection(classes: List[str]) -> Optional[bool]:
+def has_full_disconnection(classes: List[str]) -> Optional[bool]:
     if not classes:
         return None
 
@@ -29,18 +34,14 @@ def _has_full_disconnection(classes: List[str]) -> Optional[bool]:
     )
 
 
-def _safe_get_classes(el) -> List[str]:
-    return el.get("class", []) if el else []
-
-
-def _parse_css_var(style: str, name: str) -> float | None:
+def parse_css_var(style: str, name: str) -> float | None:
     m = re.search(rf"--{name}\s*:\s*([\d.]+)", style)
     return float(m.group(1)) if m else None
 
 
-def _get_classes(el) -> list[str]:
+def get_classes(el) -> list[str]:
     """
-    Быстрая замена _safe_get_classes для lxml
+    Get list of classes from an element.
     """
     if el is None:
         return []
@@ -48,7 +49,7 @@ def _get_classes(el) -> list[str]:
     return cls.split() if cls else []
 
 
-def _inc_time(hour: int, minute: int, delta_minutes: int) -> Tuple[int, int]:
+def inc_time(hour: int, minute: int, delta_minutes: int) -> Tuple[int, int]:
     total = hour * 60 + minute + delta_minutes
     total = total % (24 * 60)
     h = total // 60
@@ -56,11 +57,11 @@ def _inc_time(hour: int, minute: int, delta_minutes: int) -> Tuple[int, int]:
     return h, m
 
 
-def _fmt_time(h: int, m: int) -> str:
+def fmt_time(h: int, m: int) -> str:
     return f"{h:02d}:{m:02d}"
 
 
-def _parse_day_label(label: str) -> date:
+def parse_day_label(label: str) -> date:
     today = datetime.now().date()
 
     _, data_label = label.split(" ")
@@ -72,3 +73,55 @@ def _parse_day_label(label: str) -> date:
         candidate_date = datetime(year=today.year + 1, month=month, day=day).date()
 
     return candidate_date
+
+
+def parse_dt(label: str, text: str) -> datetime | None:
+    if label not in text:
+        logger.debug(f"Label '{label}' not found in text for datetime parsing.")
+        logger.debug(f"Text content: {text}")
+        return None
+    part = text.split(label, 1)[1].strip().split(" ")
+    logger.debug(f"Parsing datetime part: {part}")
+    try:
+        return datetime.strptime(" ".join(part[:2]), "%H:%M %Y.%m.%d")
+    except ValueError:
+        return None
+
+
+def current_disconnection_info(status_nodes: list[str]) -> CurrentDisconnection:
+    raw_status = " ".join(status_nodes).strip()
+
+    has_current_disconnection = "відсутня електроенергія" in raw_status
+    if not has_current_disconnection:
+        return CurrentDisconnection(
+            has_disconnection=False,
+            is_emergency=None,
+            reason=None,
+            started_at=None,
+            estimated_end=None,
+        )
+
+    is_emergency = None
+    reason = None
+    started_at = parse_dt("Час початку – ", raw_status)
+    estimated_end = None
+
+    if "Причина відключення" in raw_status:
+        if "Аварійне" in raw_status:
+            is_emergency = True
+            reason = "Аварійне відключення"
+            estimated_end = parse_dt("Орієнтовний час завершення – до", raw_status)
+        else:
+            is_emergency = False
+            reason = (
+                raw_status.split("Причина відключення: ")[-1].split("Час")[0].strip()
+            )
+            estimated_end = parse_dt("Орієнтовний час відновлення – до", raw_status)
+
+    return CurrentDisconnection(
+        has_disconnection=True,
+        is_emergency=is_emergency,
+        reason=reason,
+        started_at=started_at.isoformat() if started_at else None,
+        estimated_end=estimated_end.isoformat() if estimated_end else None,
+    )
