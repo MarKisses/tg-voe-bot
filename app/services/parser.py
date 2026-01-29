@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from logger import create_logger
 from lxml import etree
 
@@ -83,8 +81,6 @@ def parse_schedule(html: str, address_name: str, max_days: int = 2) -> ScheduleR
 
     cell_index = 0
     disconnection_days = []
-
-    now = datetime.now()
 
     for day_date in day_dates:
         logger.info(f"Parsing schedule for {address_name} for date: {day_date}")
@@ -205,7 +201,7 @@ def parse_schedule(html: str, address_name: str, max_days: int = 2) -> ScheduleR
 
         disconnection_days.append(
             DaySchedule(
-                date=day_date.isoformat(),
+                date=day_date,
                 has_disconnections=day_has_disconnections,
                 cells=day_rows,
             )

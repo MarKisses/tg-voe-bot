@@ -1,7 +1,9 @@
 from typing import List, Optional
-
+from datetime import datetime
 from pydantic import BaseModel
+from logger import create_logger
 
+logger = create_logger(__name__)
 
 class HalfCell(BaseModel):
     start: str
@@ -22,7 +24,7 @@ class HourCell(BaseModel):
 
 
 class DaySchedule(BaseModel):
-    date: str
+    date: datetime
     has_disconnections: bool
     cells: List[HourCell]
 
@@ -31,8 +33,8 @@ class CurrentDisconnection(BaseModel):
     has_disconnection: bool
     is_emergency: bool | None
     reason: str | None
-    started_at: str | None
-    estimated_end: str | None
+    started_at: datetime | None
+    estimated_end: datetime | None
 
 
 class ScheduleResponse(BaseModel):
@@ -43,8 +45,9 @@ class ScheduleResponse(BaseModel):
 
     disconnections: List[DaySchedule]
 
-    def get_day_schedule(self, date: str) -> Optional[DaySchedule]:
+    def get_day_schedule(self, date: datetime) -> Optional[DaySchedule]:
         for day in self.disconnections:
-            if day.date == date:
+            logger.debug(f"Checking day schedule for date: {day.date} against {date}")
+            if day.date.date() == date.date():
                 return day
         return None

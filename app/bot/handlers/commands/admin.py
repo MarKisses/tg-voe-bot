@@ -50,7 +50,7 @@ async def broadcast_message_handler(message: types.Message, state: FSMContext):
     logger.info(f"Broadcasting message from admin {message.from_user.id} to all users.")
 
     user_ids = await user_storage.get_all_users_id()
-    # user_ids.discard(message.from_user.id)  # Exclude admin from broadcast if present
+    user_ids.discard(message.from_user.id)  # Exclude admin from broadcast if present
 
     message_tasks = []
     menu_tasks = []

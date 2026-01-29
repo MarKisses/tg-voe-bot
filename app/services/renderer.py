@@ -26,13 +26,13 @@ def render_schedule_image(
     day: DaySchedule,
     current_disconnection: CurrentDisconnection | None,
     queue: str,
-    date: str,
+    date: datetime,
     address: str,
 ) -> bytes:
     """
     Render schedule as an image and return it as bytes.
     """
-    date = datetime.fromisoformat(date).date().strftime("%d-%m-%Y")
+    date_str = date.strftime("%d-%m-%Y")
 
     image_w = 1000
     image_h = 1000
@@ -46,7 +46,7 @@ def render_schedule_image(
     draw = ImageDraw.Draw(img)
 
     # ---- Заголовок ----
-    header_text = f"{queue} | {date} | {address}"
+    header_text = f"{queue} | {date_str} | {address}"
     draw.rectangle(
         [col_w / 2, row_h / 2, image_w - (col_w / 2), row_h / 2 + row_h],
         fill=settings.renderer.color_header,
@@ -220,12 +220,12 @@ def generate_disconnection_message(
         start_time = "Невідомо"
         end_time = "Невідомо"
         if current_disconnection.started_at and current_disconnection.estimated_end:
-            start_time = datetime.fromisoformat(
-                current_disconnection.started_at
-            ).strftime("%H:%M %d-%m-%Y")
-            end_time = datetime.fromisoformat(
-                current_disconnection.estimated_end
-            ).strftime("%H:%M %d-%m-%Y")
+            start_time = current_disconnection.started_at.strftime(
+                "%H:%M %d-%m-%Y"
+            )
+            end_time = current_disconnection.estimated_end.strftime(
+                "%H:%M %d-%m-%Y"
+            )
 
         return (
             "За вашою адресою зараз відсутня електроенергія.\n"
@@ -240,13 +240,13 @@ def render_schedule_text(
     day: DaySchedule,
     current_disconnection: CurrentDisconnection | None,
     queue: str,
-    date: str,
+    date: datetime,
     address: str,
 ) -> str:
     """
     Render schedule text for Telegram message.
     """
-    disconnection_date_str = datetime.fromisoformat(date).date().strftime("%d-%m-%Y")
+    disconnection_date_str = date.strftime("%d-%m-%Y")
 
     lines: list[str | None] = [
         f"<b>{queue}</b> · <b>{disconnection_date_str}</b>\n",
@@ -302,7 +302,7 @@ def render_schedule(
     day: DaySchedule,
     is_text_enabled: bool,
     queue: str,
-    date: str,
+    date: datetime,
     address: str,
     current_disconnection: CurrentDisconnection | None = None,
 ) -> RenderedSchedule:

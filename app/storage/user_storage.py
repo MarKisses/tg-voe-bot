@@ -4,6 +4,7 @@ from typing import Optional
 
 from redis.asyncio import Redis
 from services.models import Address
+from pydantic import BaseModel
 
 
 class UserStorage:
@@ -28,7 +29,7 @@ class UserStorage:
         if not raw:
             return False
         return True
-    
+
     async def enable_render_text(self, user_id: int) -> None:
         key = self._render_text_flag_key(user_id)
         await self.r.set(key, 1)
@@ -126,8 +127,8 @@ class UserStorage:
         key = self._key(user_id)
         await self.r.delete(key)
 
-    async def set_cached_schedule(self, addr_id: str, data: dict, ttl=3600):
-        await self.r.set(f"schedule:{addr_id}", json.dumps(data), ex=ttl)
+    async def set_cached_schedule(self, addr_id: str, data: BaseModel, ttl=3600):
+        await self.r.set(f"schedule:{addr_id}", data.model_dump_json(), ex=ttl)
 
     async def get_cached_schedule(self, addr_id: str) -> dict | None:
         raw = await self.r.get(f"schedule:{addr_id}")

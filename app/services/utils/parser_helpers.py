@@ -61,16 +61,16 @@ def fmt_time(h: int, m: int) -> str:
     return f"{h:02d}:{m:02d}"
 
 
-def parse_day_label(label: str) -> date:
-    today = datetime.now().date()
+def parse_day_label(label: str) -> datetime:
+    today = datetime.now()
 
     _, data_label = label.split(" ")
     day, month = map(int, data_label.split("."))
 
-    candidate_date = datetime(year=today.year, month=month, day=day).date()
+    candidate_date = datetime(year=today.year, month=month, day=day)
 
-    if candidate_date < today:
-        candidate_date = datetime(year=today.year + 1, month=month, day=day).date()
+    if candidate_date.date() < today.date():
+        candidate_date = datetime(year=today.year + 1, month=month, day=day)
 
     return candidate_date
 
