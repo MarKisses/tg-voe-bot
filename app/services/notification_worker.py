@@ -24,13 +24,11 @@ logger = create_logger(__name__)
 SubscriptionKinds = Literal["today", "tomorrow"]
 
 
-def _calc_hash(obj: dict) -> str:
+def _calc_hash(obj: str) -> str:
     """Calculate a simple hash for a dictionary object."""
     import hashlib
-    import json
 
-    obj_str = json.dumps(obj, sort_keys=True, ensure_ascii=False)
-    return hashlib.sha256(obj_str.encode("utf-8")).hexdigest()
+    return hashlib.sha256(obj.encode("utf-8")).hexdigest()
 
 
 async def _update_hashes_for_address(
@@ -40,8 +38,8 @@ async def _update_hashes_for_address(
     Update stored hashes for today's and tomorrow's schedules.
     Return a list of kinds ('today', 'tomorrow') that have changed.
     """
-    today_date = datetime.now().date().isoformat()
-    tomorrow_date = (datetime.now() + timedelta(days=1)).date().isoformat()
+    today_date = datetime.now()
+    tomorrow_date = (datetime.now() + timedelta(days=1))
 
     changed: set[SubscriptionKinds] = set()
 
@@ -53,7 +51,7 @@ async def _update_hashes_for_address(
     # --- TODAY ---
     today = schedule.get_day_schedule(today_date)
     if today:
-        today_hash = _calc_hash(today.model_dump())
+        today_hash = _calc_hash(today.model_dump_json())
 
         # If user just added subscription, do not send notification immediately
         if today_old is None:
@@ -67,7 +65,7 @@ async def _update_hashes_for_address(
     # --- TOMORROW ---
     tomorrow = schedule.get_day_schedule(tomorrow_date)
     if tomorrow:
-        tomorrow_hash = _calc_hash(tomorrow.model_dump())
+        tomorrow_hash = _calc_hash(tomorrow.model_dump_json())
 
         # On contrary, for tomorrow we always notify on first fetch
         if tomorrow_hash != tomorrow_old and tomorrow.has_disconnections:
@@ -133,8 +131,8 @@ async def _process_for_address(
 
     changed = await _update_hashes_for_address(addr_id, schedule)
 
-    today = datetime.now().date().isoformat()
-    tomorrow = (datetime.now() + timedelta(days=1)).date().isoformat()
+    today = datetime.now()
+    tomorrow = (datetime.now() + timedelta(days=1))
     if "today" in changed:
         msg = f"⚡ Оновлено графік відключень на сьогодні за адресою {address.name}."
         day_schedule = schedule.get_day_schedule(today)
@@ -167,7 +165,7 @@ async def _process_for_address(
                         parse_mode="HTML",
                     )
                 )
-            else:
+            elif image_schedule.image_bytes:
                 tasks.append(
                     tg_sem_send_photo(
                         bot=bot,

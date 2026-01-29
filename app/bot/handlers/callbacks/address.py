@@ -246,7 +246,7 @@ async def select_address_callback(callback: CallbackQuery, state: FSMContext):
                 old_msg_id=callback.message.message_id,
             )
 
-    await user_storage.set_cached_schedule(address.id, parsed.model_dump(), ttl=600)
+    await user_storage.set_cached_schedule(address.id, parsed, ttl=600)
 
     await tg_sem_show_service_menu(
         bot=callback.bot,
@@ -266,7 +266,7 @@ async def day_select_callback(callback: CallbackQuery, state: FSMContext):
     logger.info(f"User {callback.from_user.id} selected day: {callback.data}")
     _, day_offset, addr_id = callback.data.split(":", 2)
     day_offset = int(day_offset)
-    date = (datetime.now() + timedelta(days=day_offset)).date().isoformat()
+    date = (datetime.now() + timedelta(days=day_offset))
 
     schedule_data = await user_storage.get_cached_schedule(addr_id)
 
