@@ -23,14 +23,12 @@ logger = create_logger(__name__)
 
 
 async def setup_bot_commands(bot: Bot):
-    
     user_commands = [
-            BotCommand(command="start", description="Запустити бота"),
-            BotCommand(command="about", description="Інформація про бота"),
-            BotCommand(command="help", description="Допомога"),
-        ]
-    
-    
+        BotCommand(command="start", description="Запустити бота"),
+        BotCommand(command="about", description="Інформація про бота"),
+        BotCommand(command="help", description="Допомога"),
+    ]
+
     await bot.set_my_commands(
         user_commands,
         scope=BotCommandScopeAllPrivateChats(),
@@ -66,11 +64,10 @@ def setup_bot() -> tuple[Bot, Dispatcher]:
     bot = Bot(token=settings.bot_token)
     dp = Dispatcher(storage=fsm_storage)
     register_handlers(dp)
-    
+
     async def on_startup(bot: Bot) -> None:
         logger.info("Starting notification worker...")
-        
-        
+
         await setup_bot_commands(bot)
         task = asyncio.create_task(
             notification_worker(bot, interval_seconds=settings.notification.interval)
@@ -99,11 +96,11 @@ def setup_bot() -> tuple[Bot, Dispatcher]:
                 pass
 
         await bot.session.close()
-        
-    
+
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
     return bot, dp
+
 
 async def run_polling():
     bot, dp = setup_bot()

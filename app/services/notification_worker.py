@@ -39,7 +39,7 @@ async def _update_hashes_for_address(
     Return a list of kinds ('today', 'tomorrow') that have changed.
     """
     today_date = datetime.now()
-    tomorrow_date = (datetime.now() + timedelta(days=1))
+    tomorrow_date = datetime.now() + timedelta(days=1)
 
     changed: set[SubscriptionKinds] = set()
 
@@ -61,6 +61,12 @@ async def _update_hashes_for_address(
             changed.add("today")
 
         logger.debug(f"Today hash: {today_hash}, old: {today_old}")
+
+    if not today and today_old:
+        # If there was a schedule for today before, but now it's gone, we should notify users about schedule update (removal of disconnections)
+        await subscription_storage.set_last_hash(addr_id, "today", "")
+        changed.add("today")
+        logger.debug(f"Today schedule removed, old hash: {today_old}")
 
     # --- TOMORROW ---
     tomorrow = schedule.get_day_schedule(tomorrow_date)
@@ -113,11 +119,7 @@ async def _process_for_address(
     # Need to get full address info for message and rendering
     # TODO: refactor this adding separate method to get address info only
     address = await user_storage.get_address_by_id(
-        (
-            next(iter(subscribers_today))
-            if subscribers_today
-            else next(iter(subscribers_tomorrow))
-        ),
+        next(iter(subscribers_today or subscribers_tomorrow)),
         addr_id,
     )
     if not address:
@@ -125,38 +127,28 @@ async def _process_for_address(
         return set()
 
     schedule = parse_schedule(raw, address.name, max_days=2)
-    if not schedule.disconnections:
-        logger.warning(f"No disconnections for {addr_id} for 2 days")
-        return set()
+    # if not schedule.disconnections:
+    #     logger.warning(f"No disconnections for {addr_id} for 2 days")
+    #     return set()
 
+    # TODO: If there's no disconnections for today, but there was previously, we should notify users about schedule update (removal of disconnections)
     changed = await _update_hashes_for_address(addr_id, schedule)
 
     today = datetime.now()
-    tomorrow = (datetime.now() + timedelta(days=1))
+    tomorrow = datetime.now() + timedelta(days=1)
     if "today" in changed:
         msg = f"⚡ Оновлено графік відключень на сьогодні за адресою {address.name}."
         day_schedule = schedule.get_day_schedule(today)
-        if not day_schedule:
-            logger.warning(f"No schedule for today for {addr_id}")
-            return processed_users
 
-        tasks = []
-        text_schedule = render_schedule(
-            day=day_schedule,
-            is_text_enabled=True,
-            queue=schedule.disconnection_queue,
-            date=today,
-            address=schedule.address,
-        )
-        image_schedule = render_schedule(
-            day=day_schedule,
-            is_text_enabled=False,
-            queue=schedule.disconnection_queue,
-            date=today,
-            address=schedule.address,
-        )
-        for uid in subscribers_today:
-            if await user_storage.is_render_text_enabled(uid):
+        if not day_schedule:
+            text_schedule = render_schedule(
+                day=None,
+                is_text_enabled=True,
+                queue=schedule.disconnection_queue,
+                date=today,
+                address=schedule.address,
+            )
+            for uid in subscribers_today:
                 tasks.append(
                     tg_sem_send_message(
                         bot=bot,
@@ -165,32 +157,66 @@ async def _process_for_address(
                         parse_mode="HTML",
                     )
                 )
-            elif image_schedule.image_bytes:
-                tasks.append(
-                    tg_sem_send_photo(
-                        bot=bot,
-                        chat_id=uid,
-                        photo=BufferedInputFile(
-                            image_schedule.image_bytes,
-                            filename="schedule.png",
-                        ),
-                        caption=msg,
-                        show_caption_above_media=True,
-                    )
+                processed_users.add(uid)
+                logger.info(
+                    f"Sent schedule removal notification to user {uid} for address {addr_id} today ({schedule.address})"
                 )
-            processed_users.add(uid)
-            logger.info(
-                f"Sent notification to user {uid} for address {addr_id} today ({schedule.address})"
+        else:
+            text_schedule = render_schedule(
+                day=day_schedule,
+                is_text_enabled=True,
+                queue=schedule.disconnection_queue,
+                date=today,
+                address=schedule.address,
             )
+            image_schedule = render_schedule(
+                day=day_schedule,
+                is_text_enabled=False,
+                queue=schedule.disconnection_queue,
+                date=today,
+                address=schedule.address,
+            )
+            uids = list(subscribers_today)
+            prefs = await asyncio.gather(
+                *(
+                    user_storage.is_render_text_enabled(uid)
+                    for uid in uids
+                ),
+            )
+
+            for uid, pref in zip(uids, prefs):
+                if pref:
+                    tasks.append(
+                        tg_sem_send_message(
+                            bot=bot,
+                            chat_id=uid,
+                            text=f"{msg}\n{text_schedule.text}",
+                            parse_mode="HTML",
+                        )
+                    )
+                elif image_schedule.image_bytes:
+                    tasks.append(
+                        tg_sem_send_photo(
+                            bot=bot,
+                            chat_id=uid,
+                            photo=BufferedInputFile(
+                                image_schedule.image_bytes,
+                                filename="schedule.png",
+                            ),
+                            caption=msg,
+                            show_caption_above_media=True,
+                        )
+                    )
+                processed_users.add(uid)
+                logger.info(
+                    f"Sent notification to user {uid} for address {addr_id} today ({schedule.address})"
+                )
 
     if "tomorrow" in changed:
         msg = f"📅 З'явився/оновився графік на завтра за адресою {address.name}."
         day_schedule = schedule.get_day_schedule(tomorrow)
-        if not day_schedule:
-            logger.warning(f"No schedule for tomorrow for {addr_id}")
-            return processed_users
+        assert day_schedule is not None, "Tomorrow changed but no schedule"
 
-        tasks = []
         text_schedule = render_schedule(
             day=day_schedule,
             is_text_enabled=True,
@@ -205,8 +231,12 @@ async def _process_for_address(
             date=tomorrow,
             address=schedule.address,
         )
-        for uid in subscribers_tomorrow:
-            if await user_storage.is_render_text_enabled(uid):
+        uids = list(subscribers_tomorrow)
+        prefs = await asyncio.gather(
+            *(user_storage.is_render_text_enabled(uid) for uid in uids),
+        )
+        for uid, pref in zip(uids, prefs):
+            if pref:
                 tasks.append(
                     tg_sem_send_message(
                         bot,
@@ -275,8 +305,8 @@ async def notification_worker(bot: Bot, interval_seconds: int = 900) -> None:
                 )
                 for uid in processed_users
             ]
-            await asyncio.gather(*messages_tasks, return_exceptions=True)
-            exceptions = [res for res in messages_tasks if isinstance(res, Exception)]
+            results = await asyncio.gather(*messages_tasks, return_exceptions=True)
+            exceptions = [res for res in results if isinstance(res, Exception)]
             for e in exceptions:
                 logger.error("Error during updating service menu: %s", e)
 

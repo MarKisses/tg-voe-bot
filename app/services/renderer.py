@@ -299,13 +299,21 @@ def render_schedule_text(
 
 
 def render_schedule(
-    day: DaySchedule,
+    day: DaySchedule | None,
     is_text_enabled: bool,
     queue: str,
     date: datetime,
     address: str,
     current_disconnection: CurrentDisconnection | None = None,
 ) -> RenderedSchedule:
+    if not day:
+        return TextResult(
+            text=(
+                f"{queue} | {date.strftime('%d-%m-%Y')} | {address}\n\n"
+                "За вашою адресою зафіксовано відміну графіка відключень на цей день."
+            )
+        )
+    
     if is_text_enabled:
         return TextResult(
             text=render_schedule_text(
