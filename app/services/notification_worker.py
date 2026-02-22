@@ -153,7 +153,7 @@ async def _process_for_address(
                     tg_sem_send_message(
                         bot=bot,
                         chat_id=uid,
-                        text=f"{msg}\n\n{text_schedule.text}",
+                        text=f"{msg}\n{text_schedule.text}",
                         parse_mode="HTML",
                     )
                 )

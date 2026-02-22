@@ -309,6 +309,7 @@ def render_schedule(
     if not day:
         return TextResult(
             text=(
+                f"{queue} | {date.strftime('%d-%m-%Y')} | {address}\n\n"
                 "За вашою адресою зафіксовано відміну графіка відключень на цей день."
             )
         )
