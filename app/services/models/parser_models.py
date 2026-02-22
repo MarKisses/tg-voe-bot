@@ -27,7 +27,6 @@ class DaySchedule(BaseModel):
     date: datetime
     has_disconnections: bool
     cells: List[HourCell]
-    
 
 
 class CurrentDisconnection(BaseModel):
