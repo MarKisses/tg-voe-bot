@@ -140,7 +140,7 @@ async def _process_for_address(
         msg = f"⚡ Оновлено графік відключень на сьогодні за адресою {address.name}."
         day_schedule = schedule.get_day_schedule(today)
 
-        if not day_schedule:
+        if day_schedule is None:
             text_schedule = render_schedule(
                 day=None,
                 is_text_enabled=True,
@@ -176,16 +176,9 @@ async def _process_for_address(
                 date=today,
                 address=schedule.address,
             )
-            uids = list(subscribers_today)
-            prefs = await asyncio.gather(
-                *(
-                    user_storage.is_render_text_enabled(uid)
-                    for uid in uids
-                ),
-            )
 
-            for uid, pref in zip(uids, prefs):
-                if pref:
+            for uid in subscribers_today:
+                if user_storage.is_render_text_enabled(uid):
                     tasks.append(
                         tg_sem_send_message(
                             bot=bot,
@@ -231,12 +224,9 @@ async def _process_for_address(
             date=tomorrow,
             address=schedule.address,
         )
-        uids = list(subscribers_tomorrow)
-        prefs = await asyncio.gather(
-            *(user_storage.is_render_text_enabled(uid) for uid in uids),
-        )
-        for uid, pref in zip(uids, prefs):
-            if pref:
+       
+        for uid in subscribers_today:
+            if user_storage.is_render_text_enabled(uid):
                 tasks.append(
                     tg_sem_send_message(
                         bot,
