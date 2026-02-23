@@ -140,7 +140,6 @@ async def _process_for_address(
             logger.warning(f"No schedule for today for {addr_id}")
             return processed_users
 
-        tasks = []
         text_schedule = render_schedule(
             day=day_schedule,
             is_text_enabled=True,
@@ -190,7 +189,6 @@ async def _process_for_address(
             logger.warning(f"No schedule for tomorrow for {addr_id}")
             return processed_users
 
-        tasks = []
         text_schedule = render_schedule(
             day=day_schedule,
             is_text_enabled=True,
