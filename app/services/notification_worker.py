@@ -61,6 +61,11 @@ async def _update_hashes_for_address(
             changed.add("today")
 
         logger.debug(f"Today hash: {today_hash}, old: {today_old}")
+        
+    if today is None and today_old != "":
+        await subscription_storage.set_last_hash(addr_id=addr_id, kind="today", value="")
+        logger.info(f"Schedule for today disappeared for address {addr_id}. Updated hash to empty string.")
+        changed.add("today")
 
     # --- TOMORROW ---
     tomorrow = schedule.get_day_schedule(tomorrow_date)
@@ -127,7 +132,7 @@ async def _process_for_address(
     schedule = parse_schedule(raw, address.name, max_days=2)
     if not schedule.disconnections:
         logger.warning(f"No disconnections for {addr_id} for 2 days")
-        return set()
+        # return set()
 
     changed = await _update_hashes_for_address(addr_id, schedule)
 
@@ -231,7 +236,10 @@ async def _process_for_address(
                 f"Sent notification to user {uid} for address {addr_id} tomorrow ({schedule.address})"
             )
     if tasks:
-        await asyncio.gather(*tasks, return_exceptions=True)
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        exceptions = [res for res in results if isinstance(res, Exception)]
+        for e in exceptions:
+            logger.error("Error during sending notification: %s", e)
     return processed_users
 
 
@@ -273,8 +281,8 @@ async def notification_worker(bot: Bot, interval_seconds: int = 900) -> None:
                 )
                 for uid in processed_users
             ]
-            await asyncio.gather(*messages_tasks, return_exceptions=True)
-            exceptions = [res for res in messages_tasks if isinstance(res, Exception)]
+            results = await asyncio.gather(*messages_tasks, return_exceptions=True)
+            exceptions = [res for res in results if isinstance(res, Exception)]
             for e in exceptions:
                 logger.error("Error during updating service menu: %s", e)
 
