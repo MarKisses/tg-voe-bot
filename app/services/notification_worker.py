@@ -148,9 +148,6 @@ async def _process_for_address(
         if day_schedule is None:
             logger.warning(f"No schedule for today for {addr_id}")
             for uid in subscribers_today:
-                logger.info(
-                    f"Sent notification to user {uid} for address {addr_id} today ({schedule.address}) - schedule disappeared"
-                )
                 tasks.append(
                     tg_sem_send_message(
                         bot=bot,
@@ -159,6 +156,10 @@ async def _process_for_address(
                         parse_mode="HTML",
                     )
                 )
+                logger.info(
+                    f"Sent notification to user {uid} for address {addr_id} today ({schedule.address}) - schedule disappeared"
+                )
+                processed_users.add(uid)
         else:
             text_schedule = render_schedule(
                 day=day_schedule,
