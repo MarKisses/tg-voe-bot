@@ -199,16 +199,22 @@ def hour_str_modifier(disconnection_length: float) -> str:
     def format_hour_word(hours: float) -> str:
         return str(int(hours) if hours.is_integer() else hours)
 
-    if disconnection_length == 0:
-        return f"<b>{format_hour_word(disconnection_length)} годин</b>"
+    hours = disconnection_length
+    hours_int = int(hours)
 
-    if disconnection_length == 1:
-        return f"<b>{format_hour_word(disconnection_length)} година</b>"
+    last_two = hours_int % 100
+    last_one = hours_int % 10
 
-    if 0 < disconnection_length < 1 or 1 < disconnection_length < 5:
-        return f"<b>{format_hour_word(disconnection_length)} години</b>"
+    if 11 <= last_two <= 14:
+        word = "годин"
+    elif last_one == 1:
+        word = "година"
+    elif 2 <= last_one <= 4:
+        word = "години"
+    else:
+        word = "годин"
 
-    return f"<b>{format_hour_word(disconnection_length)} годин</b>"
+    return f"<b>{format_hour_word(hours)} {word}</b>"
 
 
 def generate_disconnection_message(
@@ -220,12 +226,8 @@ def generate_disconnection_message(
         start_time = "Невідомо"
         end_time = "Невідомо"
         if current_disconnection.started_at and current_disconnection.estimated_end:
-            start_time = current_disconnection.started_at.strftime(
-                "%H:%M %d-%m-%Y"
-            )
-            end_time = current_disconnection.estimated_end.strftime(
-                "%H:%M %d-%m-%Y"
-            )
+            start_time = current_disconnection.started_at.strftime("%H:%M %d-%m-%Y")
+            end_time = current_disconnection.estimated_end.strftime("%H:%M %d-%m-%Y")
 
         return (
             "За вашою адресою зараз відсутня електроенергія.\n"
