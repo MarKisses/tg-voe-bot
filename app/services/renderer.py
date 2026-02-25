@@ -97,7 +97,7 @@ def render_schedule_image(
             draw.rectangle([x1, y1, x2, y2], fill=color)
             if full.confirm:
                 cell_text.fill = "white" if full.confirm else "black"
-                cell_text.draw_text(hour)
+            cell_text.draw_text(hour)
         else:
             h1 = halves[0]
             h2 = halves[1]
