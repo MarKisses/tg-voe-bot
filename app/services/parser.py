@@ -152,7 +152,7 @@ def parse_schedule(html: str, address_name: str, max_days: int = 2) -> ScheduleR
                     left_off = overlaps(0, 30, start_min, end_min)
                     right_off = overlaps(30, 60, start_min, end_min)
 
-                    confirmed = "confirmed" in get_classes(fill_el)
+                    confirmed = confirm_from_classes(get_classes(fill_el))
 
                     if left_off or right_off:
                         day_has_disconnections = True
