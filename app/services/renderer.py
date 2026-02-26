@@ -45,7 +45,6 @@ def render_schedule_image(
     img = Image.new("RGBA", (image_w, image_h), settings.renderer.color_bg)
     draw = ImageDraw.Draw(img)
 
-    # ---- Заголовок ----
     header_text = f"{queue} | {date_str} | {address}"
     draw.rectangle(
         [col_w / 2, row_h / 2, image_w - (col_w / 2), row_h / 2 + row_h],
@@ -68,7 +67,6 @@ def render_schedule_image(
         padding_right=10,
     ).draw_text(header_text)
 
-    # ---- Таблица ----
     hours_list = day.cells
 
     for i, hour_obj in enumerate(hours_list):
@@ -85,36 +83,57 @@ def render_schedule_image(
         x2 = x1 + col_w
         y2 = y1 + row_h
 
-        if full.off:
-            # confirmed full hour
-            color = half_color(full)
-            draw.rectangle([x1, y1, x2, y2], fill=color)
-            if full.confirm:
-                cell_text_fill = "white"
-
-        else:
-            # left half
-            h1 = halves[0]
-            h1_color = half_color(h1)
-            draw.rectangle([x1, y1, x2 - col_w / 2, y2], fill=h1_color)
-
-            # right half
-            h2 = halves[1]
-            h2_color = half_color(h2)
-            draw.rectangle([x1 + col_w / 2, y1, x2, y2], fill=h2_color)
-
-            if (h1.off and h1.confirm) and (h2.off and h2.confirm):
-                cell_text_fill = "white"
-
         cell_text = TextBox(
             draw,
             (x1, y1),
             col_w,
             row_h,
             max_font_size=int(image_w * 0.035),
-            fill=cell_text_fill,
         )
-        cell_text.draw_text(hour)
+
+        if full.off:
+            # confirmed full hour
+            color = half_color(full)
+            draw.rectangle([x1, y1, x2, y2], fill=color)
+            if full.confirm:
+                cell_text.fill = "white" if full.confirm else "black"
+            cell_text.draw_text(hour)
+        else:
+            h1 = halves[0]
+            h2 = halves[1]
+
+            h1_color = half_color(h1)
+            h2_color = half_color(h2)
+
+            draw.rectangle([x1, y1, x2 - col_w / 2, y2], fill=h1_color)
+            draw.rectangle([x1 + col_w / 2, y1, x2, y2], fill=h2_color)
+
+            mask = cell_text.render_text_mask(hour)
+
+            text_layer = Image.new(
+                "RGBA",
+                (int(col_w), int(row_h)),
+                (0, 0, 0, 0),
+            )
+
+            left_color = "white" if h1.confirm else "black"
+            right_color = "white" if h2.confirm else "black"
+
+            left_part = Image.new(
+                "RGBA",
+                (int(col_w / 2), int(row_h)),
+                left_color,
+            )
+            right_part = Image.new(
+                "RGBA",
+                (int(col_w / 2), int(row_h)),
+                right_color,
+            )
+            
+            text_layer.paste(left_part, (0, 0))
+            text_layer.paste(right_part, (int(col_w / 2), 0))
+
+            img.paste(text_layer, (int(x1), int(y1)), mask)
 
     for c in range(cols + 1):
         x = col_w / 2 + c * col_w
@@ -166,7 +185,6 @@ def render_schedule_image(
         padding_right=50,
     ).draw_text("Підтверджене\nвідключення")
 
-    # ---- Сохранение в память ----
     output = BytesIO()
     img.save(output, format="PNG")
     output.seek(0)
@@ -199,16 +217,22 @@ def hour_str_modifier(disconnection_length: float) -> str:
     def format_hour_word(hours: float) -> str:
         return str(int(hours) if hours.is_integer() else hours)
 
-    if disconnection_length == 0:
-        return f"<b>{format_hour_word(disconnection_length)} годин</b>"
+    hours = disconnection_length
+    hours_int = int(hours)
 
-    if disconnection_length == 1:
-        return f"<b>{format_hour_word(disconnection_length)} година</b>"
+    last_two = hours_int % 100
+    last_one = hours_int % 10
 
-    if 0 < disconnection_length < 1 or 1 < disconnection_length < 5:
-        return f"<b>{format_hour_word(disconnection_length)} години</b>"
+    if 11 <= last_two <= 14:
+        word = "годин"
+    elif last_one == 1:
+        word = "година"
+    elif 2 <= last_one <= 4:
+        word = "години"
+    else:
+        word = "годин"
 
-    return f"<b>{format_hour_word(disconnection_length)} годин</b>"
+    return f"<b>{format_hour_word(hours)} {word}</b>"
 
 
 def generate_disconnection_message(
@@ -220,12 +244,8 @@ def generate_disconnection_message(
         start_time = "Невідомо"
         end_time = "Невідомо"
         if current_disconnection.started_at and current_disconnection.estimated_end:
-            start_time = current_disconnection.started_at.strftime(
-                "%H:%M %d-%m-%Y"
-            )
-            end_time = current_disconnection.estimated_end.strftime(
-                "%H:%M %d-%m-%Y"
-            )
+            start_time = current_disconnection.started_at.strftime("%H:%M %d-%m-%Y")
+            end_time = current_disconnection.estimated_end.strftime("%H:%M %d-%m-%Y")
 
         return (
             "За вашою адресою зараз відсутня електроенергія.\n"

@@ -1,6 +1,6 @@
 from typing import Literal
 
-from PIL import ImageDraw, ImageFont
+from PIL import ImageDraw, ImageFont, Image
 from services.models import FullCell, HalfCell
 from config import settings
 
@@ -110,6 +110,31 @@ class TextBox:
 
             self._draw.text((x, y), line, font=font, fill=self.fill)
             y += h + self.line_spacing
+            
+    def render_text_mask(self, text: str) -> Image.Image:
+        font_size = self.max_font_size
+        font = None
+
+        while font_size >= self.min_font_size:
+            font = ImageFont.truetype(self.font_path, font_size)
+            lines = self._wrap_text(text, font)
+            total_h, max_w, heights = self._measure_lines(lines, font)
+            if total_h <= self.inner_height:
+                break
+            font_size -= 1
+
+        mask = Image.new("L", (int(self.width), int(self.height)), 0)
+        mask_draw = ImageDraw.Draw(mask)
+
+        y = (self.height - total_h) / 2
+
+        for line, h in zip(lines, heights):
+            w = mask_draw.textlength(line, font)
+            x = (self.width - w) / 2
+            mask_draw.text((x, y), line, font=font, fill=255)
+            y += h + self.line_spacing
+
+        return mask
 
     def _wrap_text(self, text: str, font: ImageFont.FreeTypeFont):
         lines = []

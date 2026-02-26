@@ -11,10 +11,18 @@ logger = create_logger(__name__)
 def confirm_from_classes(classes: List[str]) -> Optional[bool]:
     if not classes:
         return None
-    if "confirm_1" in classes:
+    if "confirmed" in classes:
         return True
     if "confirm_0" in classes:
         return False
+    if "confirm_1" in classes:
+        return False
+    if "confirm_2" in classes:
+        return False
+    if "confirm_3" in classes:
+        return True
+    if "confirm_4" in classes:
+        return True
     return None
 
 

@@ -39,7 +39,7 @@ async def _update_hashes_for_address(
     Return a list of kinds ('today', 'tomorrow') that have changed.
     """
     today_date = datetime.now()
-    tomorrow_date = (datetime.now() + timedelta(days=1))
+    tomorrow_date = datetime.now() + timedelta(days=1)
 
     changed: set[SubscriptionKinds] = set()
 
@@ -61,10 +61,14 @@ async def _update_hashes_for_address(
             changed.add("today")
 
         logger.debug(f"Today hash: {today_hash}, old: {today_old}")
-        
+
     if today is None and today_old != "":
-        await subscription_storage.set_last_hash(addr_id=addr_id, kind="today", value="")
-        logger.info(f"Schedule for today disappeared for address {addr_id}. Updated hash to empty string.")
+        await subscription_storage.set_last_hash(
+            addr_id=addr_id, kind="today", value=""
+        )
+        logger.info(
+            f"Schedule for today disappeared for address {addr_id}. Updated hash to empty string."
+        )
         changed.add("today")
 
     # --- TOMORROW ---
@@ -137,55 +141,67 @@ async def _process_for_address(
     changed = await _update_hashes_for_address(addr_id, schedule)
 
     today = datetime.now()
-    tomorrow = (datetime.now() + timedelta(days=1))
+    tomorrow = datetime.now() + timedelta(days=1)
     if "today" in changed:
         msg = f"⚡ Оновлено графік відключень на сьогодні за адресою {address.name}."
         day_schedule = schedule.get_day_schedule(today)
-        if not day_schedule:
+        if day_schedule is None:
             logger.warning(f"No schedule for today for {addr_id}")
-            return processed_users
-
-        text_schedule = render_schedule(
-            day=day_schedule,
-            is_text_enabled=True,
-            queue=schedule.disconnection_queue,
-            date=today,
-            address=schedule.address,
-        )
-        image_schedule = render_schedule(
-            day=day_schedule,
-            is_text_enabled=False,
-            queue=schedule.disconnection_queue,
-            date=today,
-            address=schedule.address,
-        )
-        for uid in subscribers_today:
-            if await user_storage.is_render_text_enabled(uid):
+            for uid in subscribers_today:
                 tasks.append(
                     tg_sem_send_message(
                         bot=bot,
                         chat_id=uid,
-                        text=f"{msg}\n{text_schedule.text}",
+                        text=f"{msg}\n\nЗафіксовано відміну графіка відключень.",
                         parse_mode="HTML",
                     )
                 )
-            elif image_schedule.image_bytes:
-                tasks.append(
-                    tg_sem_send_photo(
-                        bot=bot,
-                        chat_id=uid,
-                        photo=BufferedInputFile(
-                            image_schedule.image_bytes,
-                            filename="schedule.png",
-                        ),
-                        caption=msg,
-                        show_caption_above_media=True,
-                    )
+                logger.info(
+                    f"Sent notification to user {uid} for address {addr_id} today ({schedule.address}) - schedule disappeared"
                 )
-            processed_users.add(uid)
-            logger.info(
-                f"Sent notification to user {uid} for address {addr_id} today ({schedule.address})"
+                processed_users.add(uid)
+        else:
+            text_schedule = render_schedule(
+                day=day_schedule,
+                is_text_enabled=True,
+                queue=schedule.disconnection_queue,
+                date=today,
+                address=schedule.address,
             )
+            image_schedule = render_schedule(
+                day=day_schedule,
+                is_text_enabled=False,
+                queue=schedule.disconnection_queue,
+                date=today,
+                address=schedule.address,
+            )
+            for uid in subscribers_today:
+                if await user_storage.is_render_text_enabled(uid):
+                    tasks.append(
+                        tg_sem_send_message(
+                            bot=bot,
+                            chat_id=uid,
+                            text=f"{msg}\n{text_schedule.text}",
+                            parse_mode="HTML",
+                        )
+                    )
+                elif image_schedule.image_bytes:
+                    tasks.append(
+                        tg_sem_send_photo(
+                            bot=bot,
+                            chat_id=uid,
+                            photo=BufferedInputFile(
+                                image_schedule.image_bytes,
+                                filename="schedule.png",
+                            ),
+                            caption=msg,
+                            show_caption_above_media=True,
+                        )
+                    )
+                processed_users.add(uid)
+                logger.info(
+                    f"Sent notification to user {uid} for address {addr_id} today ({schedule.address})"
+                )
 
     if "tomorrow" in changed:
         msg = f"📅 З'явився/оновився графік на завтра за адресою {address.name}."
