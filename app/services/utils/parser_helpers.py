@@ -16,29 +16,29 @@ def confirm_from_classes(classes: List[str]) -> Optional[bool]:
     if "confirm_0" in classes:
         return False
     if "confirm_1" in classes:
-        return False
+        return True
     if "confirm_2" in classes:
         return False
     if "confirm_3" in classes:
-        return True
+        return False
     if "confirm_4" in classes:
-        return True
+        return False
     return None
 
 
-def has_disconnection(classes: List[str]) -> Optional[bool]:
+def has_disconnection(classes: list[str]) -> bool | None:
     if not classes:
         return None
 
     return "has_disconnection" in classes
 
 
-def has_full_disconnection(classes: List[str]) -> Optional[bool]:
+def has_full_disconnection(classes: list[str]) -> bool | None:
     if not classes:
         return None
 
     return all(
-        (sep_class in classes for sep_class in ["has_disconnection", "full_hour"])
+        sep_class in classes for sep_class in ["has_disconnection", "full_hour"]
     )
 
 
