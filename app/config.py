@@ -5,7 +5,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Fetcher(BaseSettings):
-    base_url: str = "https://voe.com.ua/disconnection/detailed"
+    base_url: str = "https://disconnection.voe.com.ua/api"
+    # Page with search form, contains csrf token
+    page_url: str = "https://disconnection.voe.com.ua/"
 
     cookie: str | None = None
 
@@ -20,7 +22,14 @@ class Fetcher(BaseSettings):
     @computed_field
     @property
     def headers(self) -> dict[str, str]:
-        headers = {**self.accept_encoding, **self.accept_language, **self.user_agent}
+        headers = {
+            **self.accept_encoding,
+            **self.accept_language,
+            **self.user_agent,
+            "Origin": self.page_url.rstrip("/"),
+            "Referer": self.page_url,
+            "X-Requested-With": "XMLHttpRequest",
+        }
         return headers
 
 

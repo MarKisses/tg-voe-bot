@@ -1,11 +1,31 @@
-import re
-from datetime import date, datetime
+from datetime import datetime
 from typing import List, Optional, Tuple
 
 from logger import create_logger
 from services.models import CurrentDisconnection
+from services.models.api_models import ApiMessage, ApiSegment
 
 logger = create_logger(__name__)
+
+DATETIME_FORMATS = (
+    "%Y-%m-%d %H:%M:%S",
+    "%Y-%m-%d %H:%M",
+    "%d.%m.%Y %H:%M",
+    "%H:%M %d.%m.%Y",
+    "%H:%M %Y.%m.%d",
+)
+
+# message.type from api: 1 - warning, 2 - error, 3 - ok
+MESSAGE_TYPE_DISCONNECTION = 2
+
+
+# Segment classes from the site css:
+#   confirm_0 - transparent, no disconnection
+#   confirm_1 - not used anymore (commented out in css)
+#   confirm_2 - "Заплановано", planned
+#   confirm_3 - "Застосовано", applied
+#   confirm_4 - "Завершено", finished
+NO_DISCONNECTION_CLASS = "confirm_0"
 
 
 def confirm_from_classes(classes: List[str]) -> Optional[bool]:
@@ -20,41 +40,34 @@ def confirm_from_classes(classes: List[str]) -> Optional[bool]:
     if "confirm_2" in classes:
         return False
     if "confirm_3" in classes:
-        return False
+        return True
     if "confirm_4" in classes:
-        return False
+        return True
     return None
 
 
-def has_disconnection(classes: list[str]) -> bool | None:
-    if not classes:
-        return None
-
-    return "has_disconnection" in classes
+def segment_is_off(segment: ApiSegment) -> bool:
+    return NO_DISCONNECTION_CLASS not in segment.type.split()
 
 
-def has_full_disconnection(classes: list[str]) -> bool | None:
-    if not classes:
-        return None
-
-    return all(
-        sep_class in classes for sep_class in ["has_disconnection", "full_hour"]
-    )
-
-
-def parse_css_var(style: str, name: str) -> float | None:
-    m = re.search(rf"--{name}\s*:\s*([\d.]+)", style)
-    return float(m.group(1)) if m else None
+def segment_confirm(segment: ApiSegment) -> Optional[bool]:
+    confirm = confirm_from_classes(segment.type.split())
+    if confirm is None:
+        logger.warning(
+            f"Unknown segment type '{segment.type}' (label: '{segment.label}')"
+        )
+    return confirm
 
 
-def get_classes(el) -> list[str]:
-    """
-    Get list of classes from an element.
-    """
-    if el is None:
-        return []
-    cls = el.get("class")
-    return cls.split() if cls else []
+def segment_minutes(segment: ApiSegment) -> Tuple[int, int]:
+    """Converts segment percents of the hour to (start_min, end_min)."""
+    start_min = max(0, int(segment.start * 60 / 100))
+    end_min = min(60, int((segment.start + segment.size) * 60 / 100))
+    return start_min, end_min
+
+
+def overlaps(a_start: int, a_end: int, b_start: int, b_end: int) -> bool:
+    return b_start < a_end and b_end > a_start
 
 
 def inc_time(hour: int, minute: int, delta_minutes: int) -> Tuple[int, int]:
@@ -69,38 +82,25 @@ def fmt_time(h: int, m: int) -> str:
     return f"{h:02d}:{m:02d}"
 
 
-def parse_day_label(label: str) -> datetime:
-    today = datetime.now()
-
-    _, data_label = label.split(" ")
-    day, month = map(int, data_label.split("."))
-
-    candidate_date = datetime(year=today.year, month=month, day=day)
-
-    if candidate_date.date() < today.date():
-        candidate_date = datetime(year=today.year + 1, month=month, day=day)
-
-    return candidate_date
-
-
-def parse_dt(label: str, text: str) -> datetime | None:
-    if label not in text:
-        logger.debug(f"Label '{label}' not found in text for datetime parsing.")
-        logger.debug(f"Text content: {text}")
+def parse_dt(value: str | None) -> datetime | None:
+    if not value:
         return None
-    part = text.split(label, 1)[1].strip().split(" ")
-    logger.debug(f"Parsing datetime part: {part}")
+    value = value.strip()
     try:
-        return datetime.strptime(" ".join(part[:2]), "%H:%M %Y.%m.%d")
+        return datetime.fromisoformat(value)
     except ValueError:
-        return None
+        pass
+    for fmt in DATETIME_FORMATS:
+        try:
+            return datetime.strptime(value, fmt)
+        except ValueError:
+            continue
+    logger.warning(f"Can't parse datetime '{value}'")
+    return None
 
 
-def current_disconnection_info(status_nodes: list[str]) -> CurrentDisconnection:
-    raw_status = " ".join(status_nodes).strip()
-
-    has_current_disconnection = "відсутня електроенергія" in raw_status
-    if not has_current_disconnection:
+def current_disconnection_info(message: ApiMessage | None) -> CurrentDisconnection:
+    if not message or message.type != MESSAGE_TYPE_DISCONNECTION:
         return CurrentDisconnection(
             has_disconnection=False,
             is_emergency=None,
@@ -109,27 +109,15 @@ def current_disconnection_info(status_nodes: list[str]) -> CurrentDisconnection:
             estimated_end=None,
         )
 
-    is_emergency = None
-    reason = None
-    started_at = parse_dt("Час початку – ", raw_status)
-    estimated_end = None
+    # Format of the active disconnection message is not confirmed yet
+    logger.info(f"Active disconnection message: {message.model_dump()}")
 
-    if "Причина відключення" in raw_status:
-        if "Аварійне" in raw_status:
-            is_emergency = True
-            reason = "Аварійне відключення"
-            estimated_end = parse_dt("Орієнтовний час завершення – до", raw_status)
-        else:
-            is_emergency = False
-            reason = (
-                raw_status.split("Причина відключення: ")[-1].split("Час")[0].strip()
-            )
-            estimated_end = parse_dt("Орієнтовний час відновлення – до", raw_status)
+    raw_text = f"{message.title or ''} {message.text or ''}".lower()
 
     return CurrentDisconnection(
         has_disconnection=True,
-        is_emergency=is_emergency,
-        reason=reason,
-        started_at=started_at.isoformat() if started_at else None,
-        estimated_end=estimated_end.isoformat() if estimated_end else None,
+        is_emergency="аварій" in raw_text,
+        reason=message.title,
+        started_at=parse_dt(message.from_),
+        estimated_end=parse_dt(message.to),
     )

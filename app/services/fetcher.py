@@ -1,4 +1,6 @@
+import asyncio
 import json
+import re
 
 import httpx
 from bs4 import BeautifulSoup
@@ -9,6 +11,62 @@ from exceptions import VoeDownException
 from .utils.fetch_wrapper import fetch
 
 logger = create_logger(__name__)
+
+
+def _unwrap_json(r: dict) -> dict:
+    """In proxy mode FlareSolverr returns JSON rendered by the browser inside <pre>."""
+    if settings.flare.operating_mode != "proxy":
+        return r
+
+    soup = BeautifulSoup(r["solution"]["response"], "lxml")
+    pre = soup.find("pre")
+    if not pre:
+        raise ValueError("No pre found in FlareSolverr response")
+    return json.loads(pre.text)
+
+
+def _unwrap_items(r: dict) -> list[dict]:
+    data = _unwrap_json(r)
+    if not data.get("ok"):
+        logger.warning("Autocomplete returned not ok: %s", data)
+        return []
+    return data.get("items", [])
+
+
+CSRF_RE = re.compile(r'name="csrf"\s+value="([^"]+)"')
+CSRF_ERROR = "Помилка безпеки"
+
+_csrf_token: str | None = None
+_csrf_lock = asyncio.Lock()
+
+
+async def _fetch_csrf_token() -> str:
+    """
+    Loads the search page to get csrf token.
+    Token is bound to the site session (PHPSESSID): in cookie mode it is kept
+    in fetch_wrapper, in proxy mode in the FlareSolverr session.
+    """
+    r = await fetch(settings.fetcher.page_url, as_text=True)
+    html = r["solution"]["response"] if settings.flare.operating_mode == "proxy" else r
+
+    match = CSRF_RE.search(html)
+    if not match:
+        raise ValueError("No csrf token found on the search page")
+    return match.group(1)
+
+
+async def _get_csrf_token(refresh: bool = False) -> str:
+    global _csrf_token
+
+    old_token = _csrf_token
+    async with _csrf_lock:
+        # Other coroutine could already refresh it while we were waiting
+        if _csrf_token and (not refresh or _csrf_token != old_token):
+            return _csrf_token
+
+        logger.info("Fetching new csrf token...")
+        _csrf_token = await _fetch_csrf_token()
+        return _csrf_token
 
 
 async def fetch_cities(query: str | None):
@@ -24,16 +82,7 @@ async def fetch_cities(query: str | None):
         if e.response.status_code >= 500:
             raise VoeDownException
         return []
-    logger.info(r)
-
-    if settings.flare.operating_mode == "proxy":
-        soup = BeautifulSoup(r["solution"]["response"], "lxml")
-        pre = soup.find("pre")
-        if not pre:
-            raise ValueError("No pre found in AJAX drupal response")
-        return json.loads(pre.text)
-
-    return r
+    return _unwrap_items(r)
 
 
 async def fetch_streets(city_id: int | None, query: str | None):
@@ -51,13 +100,7 @@ async def fetch_streets(city_id: int | None, query: str | None):
             raise VoeDownException
         return []
 
-    if settings.flare.operating_mode == "proxy":
-        soup = BeautifulSoup(r["solution"]["response"], "lxml")
-        pre = soup.find("pre")
-        if not pre:
-            raise ValueError("No pre found in AJAX drupal response")
-        return json.loads(pre.text)
-    return r
+    return _unwrap_items(r)
 
 
 async def fetch_houses(street_id: int | None, query: str | None):
@@ -74,48 +117,42 @@ async def fetch_houses(street_id: int | None, query: str | None):
         if e.response.status_code >= 500:
             raise VoeDownException
         return []
-    if settings.flare.operating_mode == "proxy":
-        soup = BeautifulSoup(r["solution"]["response"], "lxml")
-        pre = soup.find("pre")
-        if not pre:
-            raise ValueError("No pre found in AJAX drupal response")
-        return json.loads(pre.text)
-    return r
+    return _unwrap_items(r)
 
 
-async def fetch_schedule(city_id: int, street_id: int, house_id: int) -> str:
-    # url = "/disconnection/detailed"
+async def fetch_schedule(city_id: int, street_id: int, house_id: int) -> dict | None:
     url = "/search.php"
 
-    params = {
-        "search_type": 0,
-        "city_id": city_id,
-        "street_id": street_id,
-        "house_id": house_id,
-        "ajax_form": 1,
-    }
+    # Browser sends multipart/form-data, but PHP reads urlencoded body into $_POST
+    # the same way. Urlencoded is also the only format FlareSolverr postData supports.
     data = {
-        "search_type": 0,
+        "type": "address",
+        "value": house_id,
         "city_id": city_id,
         "street_id": street_id,
         "house_id": house_id,
-        "form_id": "disconnection_detailed_search_form",
     }
 
-    try:
-        r = await fetch(url, params=params, data=data, method="POST")
-    except httpx.HTTPStatusError as e:
-        logger.error("Failed to fetch schedule: %s", e)
-        if e.response.status_code >= 500:
-            raise VoeDownException
-        return ""
+    for attempt in range(2):
+        try:
+            data["csrf"] = await _get_csrf_token(refresh=attempt > 0)
+            r = await fetch(url, data=data, method="POST")
+        except httpx.HTTPStatusError as e:
+            logger.error("Failed to fetch schedule: %s", e)
+            if e.response.status_code >= 500:
+                raise VoeDownException
+            return None
 
-    if settings.flare.operating_mode == "proxy":
-        soup = BeautifulSoup(r["solution"]["response"], "lxml")
-        textarea = soup.find("textarea")
-        if not textarea:
-            raise ValueError("No textarea found in AJAX drupal response")
-        return json.loads(textarea.text)[3]["data"]
+        result = _unwrap_json(r)
+        if result.get("ok"):
+            return result
 
-    value = next((item for item in r if item.get("command", "") == "insert"))
-    return value["data"]
+        if CSRF_ERROR in (result.get("message") or ""):
+            logger.warning("Csrf token rejected, refreshing session...")
+            continue
+
+        logger.warning("Search returned not ok: %s", result)
+        return None
+
+    logger.error("Search failed after csrf refresh: %s", result)
+    return None

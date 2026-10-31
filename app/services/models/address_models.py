@@ -1,7 +1,7 @@
 import re
 from typing import Self
 
-from pydantic import BaseModel, ValidationError, computed_field
+from pydantic import BaseModel, computed_field
 
 
 class ItemBase(BaseModel):
@@ -9,19 +9,9 @@ class ItemBase(BaseModel):
     id: int
 
     @classmethod
-    def from_api(cls, data: dict | None) -> Self:
-        if data is None:
-            raise ValidationError
-
-        name = data.get("value", "").replace("..", ".")
-
-        label = data["label"]
-        match = re.search(r'data-id="(\d+)"', label)
-
-        if match:
-            id = int(match.group(1))
-            return cls(name=name, id=id)
-        raise ValidationError("Invalid API response format")
+    def from_api(cls, data: dict) -> Self:
+        # New API format: {"id": "510100000", "label": "м.Вінниця (Вінницька Область/М.Вінниця)"}
+        return cls(id=int(data["id"]), name=data["label"].strip())
 
 
 class City(ItemBase): ...

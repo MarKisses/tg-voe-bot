@@ -31,16 +31,41 @@ async def _attempt_request(
 http_sem = asyncio.Semaphore(3)
 cf_lock = asyncio.Lock()
 
+# Site session cookies (PHPSESSID etc.) for cookie mode.
+# CSRF token is bound to PHPSESSID, so they must be sent together.
+session_cookies: dict[str, str] = {}
+
+
+def _get_cookies() -> dict[str, str]:
+    cookies = dict(session_cookies)
+    if settings.fetcher.cookie:
+        cookies["cf_clearance"] = settings.fetcher.cookie
+    return cookies
+
+
+def _result(r: httpx.Response, as_text: bool):
+    session_cookies.update(dict(r.cookies))
+    return r.text if as_text else r.json()
+
 
 async def fetch(
-    url: str, params: dict | None = None, data: dict | None = None, method: str = "GET"
+    url: str,
+    params: dict | None = None,
+    data: dict | None = None,
+    method: str = "GET",
+    as_text: bool = False,
 ):
+    """
+    url is relative to settings.fetcher.base_url or absolute.
+    In proxy mode returns raw FlareSolverr response regardless of as_text.
+    """
     async with http_sem:
         base_url = settings.fetcher.base_url
+        full_url = url if url.startswith("http") else f"{base_url}{url}"
 
         if settings.flare.operating_mode == "proxy":
             return await flare_proxy(
-                f"{base_url}{url}",
+                full_url,
                 params=params,
                 data=data,
                 method=method,
@@ -50,9 +75,8 @@ async def fetch(
             attempt = 0
 
             while True:
-                cookie = settings.fetcher.cookie
                 headers = settings.fetcher.headers
-                cookies = {"cf_clearance": cookie} if cookie else None
+                cookies = _get_cookies()
 
                 try:
                     r = await _attempt_request(
@@ -60,21 +84,19 @@ async def fetch(
                     )
                     if r.status_code == 403:
                         async with cf_lock:
-                            cookie = settings.fetcher.cookie
                             headers = settings.fetcher.headers
-                            cookies = {"cf_clearance": cookie} if cookie else None
+                            cookies = _get_cookies()
 
                             r = await _attempt_request(
                                 client, method, url, headers, params, cookies, data
                             )
                             if r.status_code != 403:
-                                return r.json()
+                                return _result(r, as_text)
 
                             logger.info(
                                 "🔥 Cloudflare challenge detected, using FlareSolverr…"
                             )
 
-                            full_url = f"{base_url}{url}"
                             solution = await solve_challenge(full_url)
 
                             for c in solution["cookies"]:
@@ -92,7 +114,7 @@ async def fetch(
                             "Server error, retrying...", request=r.request, response=r
                         )
                     r.raise_for_status()
-                    return r.json()
+                    return _result(r, as_text)
 
                 except (httpx.TimeoutException, httpx.NetworkError):
                     err = "network"
