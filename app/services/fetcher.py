@@ -12,8 +12,11 @@ logger = create_logger(__name__)
 
 
 async def fetch_cities(query: str | None):
-    url = "/autocomplete/read_city"
-    params = {"q": query}
+    url = "/autocomplete.php"
+    params = {
+        "type": "city",
+        "q": query,
+    }
     try:
         r = await fetch(url, params=params)
     except httpx.HTTPStatusError as e:
@@ -34,8 +37,12 @@ async def fetch_cities(query: str | None):
 
 
 async def fetch_streets(city_id: int | None, query: str | None):
-    url = f"/autocomplete/read_street/{city_id}"
-    params = {"q": query}
+    url = "/autocomplete.php"
+    params = {
+        "type": "street",
+        "q": query,
+        "ref": city_id,
+    }
     try:
         r = await fetch(url, params=params)
     except httpx.HTTPStatusError as e:
@@ -54,8 +61,12 @@ async def fetch_streets(city_id: int | None, query: str | None):
 
 
 async def fetch_houses(street_id: int | None, query: str | None):
-    url = f"/autocomplete/read_house/{street_id}"
-    params = {"q": query}
+    url = "/autocomplete.php"
+    params = {
+        "type": "house",
+        "q": query,
+        "ref": street_id,
+    }
     try:
         r = await fetch(url, params=params)
     except httpx.HTTPStatusError as e:
@@ -74,7 +85,7 @@ async def fetch_houses(street_id: int | None, query: str | None):
 
 async def fetch_schedule(city_id: int, street_id: int, house_id: int) -> str:
     # url = "/disconnection/detailed"
-    url = ""
+    url = "/search.php"
 
     params = {
         "search_type": 0,
@@ -106,5 +117,5 @@ async def fetch_schedule(city_id: int, street_id: int, house_id: int) -> str:
             raise ValueError("No textarea found in AJAX drupal response")
         return json.loads(textarea.text)[3]["data"]
 
-    value = next((item for item in r if item.get("command","") == "insert"))
+    value = next((item for item in r if item.get("command", "") == "insert"))
     return value["data"]
